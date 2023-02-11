@@ -14,7 +14,7 @@ npm i @pearjs/bundle
 
 The header length is a 32-bit unsigned integer denoting the total length of the header. The header itself is a JSON string of header length bytes and has the following format:
 
-```json
+```js
 {
   "version": 0,
   "main": "<path>" | null,
