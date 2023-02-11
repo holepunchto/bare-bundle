@@ -36,7 +36,7 @@ module.exports = class Bundle {
 
     const json = Buffer.from(`\n${JSON.stringify(header, null, indent)}\n`)
 
-    const buffer = Buffer.allocUnsafe(4 + json.byteLength + offset)
+    const buffer = Buffer.alloc(4 + json.byteLength + offset)
 
     const view = new DataView(buffer.buffer)
 
