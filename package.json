@@ -1,6 +1,6 @@
 {
   "name": "@pearjs/bundle",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Application bundle format for 🍐.js",
   "main": "index.js",
   "files": [
