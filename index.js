@@ -1,9 +1,13 @@
 module.exports = class Bundle {
-  constructor (version) {
+  constructor () {
     this.version = 0
     this.main = null
 
     this._files = new Map()
+  }
+
+  read (file) {
+    return this._files.get(file) || null
   }
 
   write (file, data, opts = {}) {

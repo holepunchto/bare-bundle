@@ -8,6 +8,11 @@ test('basic', (t) => {
     .write('/foo.js', 'foo', { main: true })
     .write('/bar.js', 'bar')
 
+  t.is(bundle.main, '/foo.js')
+
+  t.alike(bundle.read('/foo.js'), Buffer.from('foo'))
+  t.alike(bundle.read('/bar.js'), Buffer.from('bar'))
+
   const buffer = bundle.toBuffer()
 
   t.alike(bundle, Bundle.from(buffer))
