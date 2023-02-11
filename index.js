@@ -6,6 +6,10 @@ module.exports = class Bundle {
     this._files = new Map()
   }
 
+  exists (file) {
+    return this._files.has(file)
+  }
+
   read (file) {
     return this._files.get(file) || null
   }
