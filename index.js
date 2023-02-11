@@ -12,7 +12,11 @@ module.exports = class Bundle {
     return this
   }
 
-  toBuffer () {
+  toBuffer (opts = {}) {
+    const {
+      indent = 0
+    } = opts
+
     const header = {
       version: this.version,
       main: this.main,
@@ -30,7 +34,7 @@ module.exports = class Bundle {
       offset += data.byteLength
     }
 
-    const json = Buffer.from(JSON.stringify(header))
+    const json = Buffer.from(`\n${JSON.stringify(header, null, indent)}\n`)
 
     const buffer = Buffer.allocUnsafe(4 + json.byteLength + offset)
 
