@@ -1,3 +1,5 @@
+const path = require('@pearjs/path')
+
 module.exports = class Bundle {
   constructor () {
     this.version = 0
@@ -27,6 +29,27 @@ module.exports = class Bundle {
     if (alias) this.imports[alias] = file
 
     return this
+  }
+
+  mount (root) {
+    if (this.main) this.main = path.join(root, this.main)
+
+    const imports = this.imports
+    this.imports = Object.create(null)
+
+    for (let [from, to] of Object.entries(imports)) {
+      if (from.startsWith('/')) from = path.join(root, from)
+      if (to.startsWith('/')) to = path.join(root, to)
+
+      this.imports[from] = to
+    }
+
+    const files = this._files
+    this._files = new Map()
+
+    for (const [file, data] of files) {
+      this._files.set(path.join(root, file), data)
+    }
   }
 
   toBuffer (opts = {}) {
