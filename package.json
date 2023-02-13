@@ -20,7 +20,8 @@
   },
   "homepage": "https://github.com/holepunchto/pearjs-bundle#readme",
   "dependencies": {
-    "@pearjs/path": "^1.0.4"
+    "@pearjs/path": "^1.0.4",
+    "b4a": "^1.6.1"
   },
   "devDependencies": {
     "brittle": "^3.1.1",

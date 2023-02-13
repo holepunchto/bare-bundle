@@ -1,4 +1,5 @@
 const path = require('@pearjs/path')
+const b4a = require('b4a')
 
 module.exports = class Bundle {
   constructor () {
@@ -23,7 +24,7 @@ module.exports = class Bundle {
       alias = null
     } = opts
 
-    this._files.set(file, typeof data === 'string' ? Buffer.from(data) : data)
+    this._files.set(file, typeof data === 'string' ? b4a.from(data) : data)
 
     if (main) this.main = file
     if (alias) this.imports[alias] = file
@@ -77,9 +78,9 @@ module.exports = class Bundle {
       offset += data.byteLength
     }
 
-    const json = Buffer.from(`\n${JSON.stringify(header, null, indent)}\n`)
+    const json = b4a.from(`\n${JSON.stringify(header, null, indent)}\n`)
 
-    const buffer = Buffer.alloc(4 + json.byteLength + offset)
+    const buffer = b4a.alloc(4 + json.byteLength + offset)
 
     const view = new DataView(buffer.buffer)
 
@@ -100,13 +101,13 @@ module.exports = class Bundle {
   }
 
   static from (buffer) {
-    if (typeof buffer === 'string') buffer = Buffer.from(buffer)
+    if (typeof buffer === 'string') buffer = b4a.from(buffer)
 
     const view = new DataView(buffer.buffer)
 
     const json = buffer.subarray(4, 4 + view.getUint32(0, true))
 
-    const header = JSON.parse(json.toString())
+    const header = JSON.parse(b4a.toString(json))
 
     const bundle = new Bundle()
 
