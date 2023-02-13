@@ -2,6 +2,7 @@ module.exports = class Bundle {
   constructor () {
     this.version = 0
     this.main = null
+    this.imports = Object.create(null)
 
     this._files = new Map()
   }
@@ -15,8 +16,16 @@ module.exports = class Bundle {
   }
 
   write (file, data, opts = {}) {
+    const {
+      main = false,
+      alias = null
+    } = opts
+
     this._files.set(file, typeof data === 'string' ? Buffer.from(data) : data)
-    if (opts.main) this.main = file
+
+    if (main) this.main = file
+    if (alias) this.imports[alias] = file
+
     return this
   }
 
@@ -28,6 +37,7 @@ module.exports = class Bundle {
     const header = {
       version: this.version,
       main: this.main,
+      imports: this.imports,
       files: {}
     }
 

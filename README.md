@@ -18,6 +18,9 @@ The header length is a 32-bit unsigned integer denoting the total length of the 
 {
   "version": 0,
   "main": "<path>" | null,
+  "imports": {
+    "<from>": "<to>"
+  },
   "files": {
     "<path>": {
       "offset": number,
