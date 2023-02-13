@@ -83,15 +83,15 @@ module.exports = class Bundle {
 
     const bundle = new Bundle()
 
+    bundle.main = header.main
+    bundle.imports = header.imports
+
     let offset = 4 + json.byteLength
 
     for (const [file, info] of Object.entries(header.files)) {
       bundle.write(
         file,
-        buffer.subarray(offset, offset + info.length),
-        {
-          main: header.main === file
-        }
+        buffer.subarray(offset, offset + info.length)
       )
 
       offset += info.length

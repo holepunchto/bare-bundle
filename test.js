@@ -6,7 +6,7 @@ test('basic', (t) => {
 
   bundle
     .write('/foo.js', 'foo', { main: true })
-    .write('/bar.js', 'bar')
+    .write('/bar.js', 'bar', { alias: 'bar' })
 
   t.is(bundle.main, '/foo.js')
 
