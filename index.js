@@ -1,3 +1,5 @@
+const toRadixTree = require('to-radix-tree')
+
 module.exports = class Bundle {
   constructor () {
     this.version = 0
@@ -27,6 +29,22 @@ module.exports = class Bundle {
     if (alias) this.imports[alias] = file
 
     return this
+  }
+
+  * directories () {
+    yield * traverse(toRadixTree([...this._files.keys()]))
+
+    function * traverse (node, prefix = '') {
+      if (node.value !== null) return
+
+      prefix += node.prefix
+
+      if (prefix) yield prefix
+
+      for (const child of node.children) {
+        yield * traverse(child, prefix)
+      }
+    }
   }
 
   toBuffer (opts = {}) {

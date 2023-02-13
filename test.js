@@ -17,3 +17,21 @@ test('basic', (t) => {
 
   t.alike(bundle, Bundle.from(buffer))
 })
+
+test('directories', (t) => {
+  const bundle = new Bundle()
+
+  bundle
+    .write('/a.js', 'a')
+    .write('/a/b.js', 'b')
+    .write('/a/b/c.js', 'c')
+    .write('/d.js', 'd')
+    .write('/d/e.js', 'e')
+
+  t.alike([...bundle.directories()], [
+    '/',
+    '/a',
+    '/a/b',
+    '/d'
+  ])
+})
