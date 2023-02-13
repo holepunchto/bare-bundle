@@ -100,6 +100,8 @@ module.exports = class Bundle {
   }
 
   static from (buffer) {
+    if (typeof buffer === 'string') buffer = Buffer.from(buffer)
+
     const view = new DataView(buffer.buffer)
 
     const json = buffer.subarray(4, 4 + view.getUint32(0, true))
