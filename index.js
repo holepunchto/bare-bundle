@@ -50,6 +50,8 @@ module.exports = class Bundle {
     for (const [file, data] of files) {
       this._files.set(path.join(root, file), data)
     }
+
+    return this
   }
 
   toBuffer (opts = {}) {
