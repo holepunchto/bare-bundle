@@ -33,26 +33,22 @@ module.exports = class Bundle {
   }
 
   mount (root) {
-    if (this.main) this.main = path.join(root, this.main)
+    const mounted = new Bundle()
 
-    const imports = this.imports
-    this.imports = Object.create(null)
+    if (this.main) mounted.main = path.join(root, this.main)
 
-    for (let [from, to] of Object.entries(imports)) {
+    for (let [from, to] of Object.entries(this.imports)) {
       if (from.startsWith('/')) from = path.join(root, from)
       if (to.startsWith('/')) to = path.join(root, to)
 
-      this.imports[from] = to
+      mounted.imports[from] = to
     }
 
-    const files = this._files
-    this._files = new Map()
-
-    for (const [file, data] of files) {
-      this._files.set(path.join(root, file), data)
+    for (const [file, data] of this._files) {
+      mounted._files.set(path.join(root, file), data)
     }
 
-    return this
+    return mounted
   }
 
   toBuffer (opts = {}) {
