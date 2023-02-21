@@ -32,6 +32,14 @@ module.exports = class Bundle {
     return this
   }
 
+  map (fn) {
+    this._files = new Map(
+      [...this._files].map(([file, data]) => [file, fn(data, file)])
+    )
+
+    return this
+  }
+
   mount (root) {
     const mounted = new Bundle()
 

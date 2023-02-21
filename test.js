@@ -17,3 +17,15 @@ test('basic', (t) => {
 
   t.alike(bundle, Bundle.from(buffer))
 })
+
+test('map', (t) => {
+  const bundle = new Bundle()
+
+  bundle
+    .write('/foo.js', 'foo')
+    .write('/bar.js', 'bar')
+    .map((data, file) => Buffer.concat([data, Buffer.from('baz')]))
+
+  t.alike(bundle.read('/foo.js'), Buffer.from('foobaz'))
+  t.alike(bundle.read('/bar.js'), Buffer.from('barbaz'))
+})
