@@ -29,3 +29,17 @@ test('map', (t) => {
   t.alike(bundle.read('/foo.js'), Buffer.from('foobaz'))
   t.alike(bundle.read('/bar.js'), Buffer.from('barbaz'))
 })
+
+test('hashbang', (t) => {
+  const bundle = new Bundle()
+
+  const buffer = bundle
+    .write('/foo.js', 'foo')
+    .toBuffer()
+
+  const parsed = Bundle.from(
+    Buffer.concat([Buffer.from('#!hashbang\n'), buffer])
+  )
+
+  t.alike(bundle, parsed)
+})

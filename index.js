@@ -84,14 +84,14 @@ module.exports = class Bundle {
 
     const json = b4a.from(`\n${JSON.stringify(header, null, indent)}\n`)
 
-    const buffer = b4a.alloc(4 + json.byteLength + offset)
+    const len = b4a.from(json.byteLength.toString(10))
 
-    const view = new DataView(buffer.buffer)
+    const buffer = b4a.alloc(len.byteLength + json.byteLength + offset)
 
     offset = 0
 
-    view.setUint32(offset, json.byteLength, true)
-    offset += 4
+    buffer.set(len, offset)
+    offset += len.byteLength
 
     buffer.set(json, offset)
     offset += json.byteLength
@@ -107,18 +107,33 @@ module.exports = class Bundle {
   static from (buffer) {
     if (typeof buffer === 'string') buffer = b4a.from(buffer)
 
-    const view = new DataView(buffer.buffer)
+    if (buffer[0] === 0x23 /* # */ && buffer[1] === 0x21 /* ! */) {
+      let end = 2
 
-    const json = buffer.subarray(4, 4 + view.getUint32(0, true))
+      while (buffer[end] !== 0xa /* \n */) end++
+
+      buffer = buffer.subarray(end + 1)
+    }
+
+    let end = 0
+
+    while (isDecimal(buffer[end])) end++
+
+    const len = parseInt(b4a.toString(buffer.subarray(0, end)), 10)
+
+    const json = buffer.subarray(end, end + len)
 
     const header = JSON.parse(b4a.toString(json))
 
     const bundle = new Bundle()
 
     bundle.main = header.main
-    bundle.imports = header.imports
 
-    let offset = 4 + json.byteLength
+    for (const [from, to] of Object.entries(header.imports)) {
+      bundle.imports[from] = to
+    }
+
+    let offset = end + json.byteLength
 
     for (const [file, info] of Object.entries(header.files)) {
       bundle.write(
@@ -131,4 +146,8 @@ module.exports = class Bundle {
 
     return bundle
   }
+}
+
+function isDecimal (c) {
+  return c >= 0x30 && c <= 0x39
 }
