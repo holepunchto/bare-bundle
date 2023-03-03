@@ -37,4 +37,4 @@ The bundle may optionally be prefixed with a hashbang, `#!`, for use with script
 
 ## License
 
-MIT
+Apache-2.0
