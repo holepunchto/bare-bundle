@@ -104,7 +104,13 @@ module.exports = class Bundle {
     return buffer
   }
 
+  static isBundle (value) {
+    return value instanceof Bundle
+  }
+
   static from (buffer) {
+    if (this.isBundle(buffer)) return buffer
+
     if (typeof buffer === 'string') buffer = Buffer.from(buffer)
 
     if (buffer[0] === 0x23 /* # */ && buffer[1] === 0x21 /* ! */) {
