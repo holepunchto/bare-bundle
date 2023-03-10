@@ -1,5 +1,4 @@
-const path = require('@pearjs/path')
-const Buffer = require('@pearjs/buffer')
+const path = require('path')
 
 module.exports = class Bundle {
   constructor () {
@@ -125,7 +124,7 @@ module.exports = class Bundle {
 
     while (isDecimal(buffer[end])) end++
 
-    const len = parseInt(Buffer.toString(buffer.subarray(0, end)), 10)
+    const len = parseInt(Buffer.coerce(buffer.subarray(0, end)).toString(), 10)
 
     const json = buffer.subarray(end, end + len)
 
