@@ -1,9 +1,9 @@
-# @pearjs/bundle
+# bare-bundle
 
-Application bundle format for :pear:.js, inspired by <https://github.com/electron/asar>.
+Application bundle format for JavaScript, inspired by <https://github.com/electron/asar>.
 
 ```
-npm i @pearjs/bundle
+npm i bare-bundle
 ```
 
 ## Format
