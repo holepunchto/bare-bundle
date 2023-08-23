@@ -30,6 +30,19 @@ test('map', (t) => {
   t.alike(bundle.read('/bar.js'), Buffer.from('barbaz'))
 })
 
+test('iterate', (t) => {
+  const bundle = new Bundle()
+
+  bundle
+    .write('/foo.js', 'foo')
+    .write('/bar.js', 'bar')
+
+  t.alike([...bundle], [
+    ['/foo.js', Buffer.from('foo')],
+    ['/bar.js', Buffer.from('bar')]
+  ])
+})
+
 test('hashbang', (t) => {
   const bundle = new Bundle()
 

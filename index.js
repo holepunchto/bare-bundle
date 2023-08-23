@@ -9,6 +9,10 @@ module.exports = class Bundle {
     this._files = new Map()
   }
 
+  [Symbol.iterator] () {
+    return this._files[Symbol.iterator]()
+  }
+
   exists (file) {
     return this._files.has(file)
   }
