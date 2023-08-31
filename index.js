@@ -115,6 +115,7 @@ module.exports = class Bundle {
     if (this.isBundle(buffer)) return buffer
 
     if (typeof buffer === 'string') buffer = Buffer.from(buffer)
+    else buffer = Buffer.coerce(buffer)
 
     if (buffer[0] === 0x23 /* # */ && buffer[1] === 0x21 /* ! */) {
       let end = 2
@@ -128,11 +129,9 @@ module.exports = class Bundle {
 
     while (isDecimal(buffer[end])) end++
 
-    const len = parseInt(Buffer.coerce(buffer.subarray(0, end)).toString(), 10)
+    const len = parseInt(buffer.toString('utf8', 0, end), 10)
 
-    const json = buffer.subarray(end, end + len)
-
-    const header = JSON.parse(Buffer.coerce(json).toString())
+    const header = JSON.parse(buffer.toString('utf8', end, end + len))
 
     const bundle = new Bundle()
 
@@ -142,7 +141,7 @@ module.exports = class Bundle {
       bundle.imports[from] = to
     }
 
-    let offset = end + json.byteLength
+    let offset = end + len
 
     for (const [file, info] of Object.entries(header.files)) {
       bundle.write(
