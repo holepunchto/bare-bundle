@@ -1,4 +1,4 @@
-const path = require('path')
+const path = require('bare-path')
 
 module.exports = class Bundle {
   constructor () {
