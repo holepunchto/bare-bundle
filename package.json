@@ -1,6 +1,6 @@
 {
   "name": "bare-bundle",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Application bundle format for JavaScript",
   "main": "index.js",
   "files": [
