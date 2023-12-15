@@ -137,10 +137,18 @@ module.exports = class Bundle {
 
     const bundle = new Bundle()
 
-    bundle.main = header.main
+    bundle.main = header.main || null
 
-    for (const [from, to] of Object.entries(header.imports)) {
-      bundle.imports[from] = to
+    if (header.imports) {
+      for (const [from, to] of Object.entries(header.imports)) {
+        bundle.imports[from] = to
+      }
+    }
+
+    if (header.resolutions) {
+      for (const [path, imports] of Object.entries(header.resolutions)) {
+        bundle.resolutions[path] = imports
+      }
     }
 
     let offset = end + len
