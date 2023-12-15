@@ -49,18 +49,33 @@ module.exports = class Bundle {
 
     if (this.main) mounted.main = path.join(root, this.main)
 
-    for (let [from, to] of Object.entries(this.imports)) {
-      if (from.startsWith('/')) from = path.join(root, from)
-      if (to.startsWith('/')) to = path.join(root, to)
+    mounted.imports = mountPaths(this.imports)
 
-      mounted.imports[from] = to
-    }
+    if (this.resolutions) mounted.resolutions = mountPaths(this.resolutions)
 
     for (const [file, data] of this._files) {
       mounted._files.set(path.join(root, file), data)
     }
 
     return mounted
+
+    function mountPaths (paths) {
+      if (typeof paths === 'string') {
+        return path.isAbsolute(paths) ? path.join(root, paths) : paths
+      }
+
+      if (typeof paths === 'object' && paths !== null) {
+        const mounted = Object.create(null)
+
+        for (const [key, value] of Object.entries(paths)) {
+          mounted[mountPaths(key)] = mountPaths(value)
+        }
+
+        return mounted
+      }
+
+      return null
+    }
   }
 
   toBuffer (opts = {}) {

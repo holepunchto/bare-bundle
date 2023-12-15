@@ -30,6 +30,37 @@ test('map', (t) => {
   t.alike(bundle.read('/bar.js'), Buffer.from('barbaz'))
 })
 
+test('mount', (t) => {
+  const bundle = new Bundle()
+
+  bundle
+    .write('/foo.js', 'foo')
+    .write('/bar.js', 'bar')
+
+  bundle.imports = {
+    bar: '/bar.js'
+  }
+
+  bundle.resolutions = {
+    '/bar': '/bar.js'
+  }
+
+  const mounted = bundle.mount('/dir')
+
+  t.alike([...mounted], [
+    ['/dir/foo.js', Buffer.from('foo')],
+    ['/dir/bar.js', Buffer.from('bar')]
+  ])
+
+  t.alike({ ...mounted.imports }, {
+    bar: '/dir/bar.js'
+  })
+
+  t.alike({ ...mounted.resolutions }, {
+    '/dir/bar': '/dir/bar.js'
+  })
+})
+
 test('iterate', (t) => {
   const bundle = new Bundle()
 
