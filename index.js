@@ -5,7 +5,7 @@ module.exports = class Bundle {
     this.version = 0
     this.main = null
     this.imports = Object.create(null)
-    this.resolutions = Object.create(null)
+    this.resolutions = null
 
     this._files = new Map()
   }
@@ -146,6 +146,8 @@ module.exports = class Bundle {
     }
 
     if (header.resolutions) {
+      bundle.resolutions = Object.create(null)
+
       for (const [path, imports] of Object.entries(header.resolutions)) {
         bundle.resolutions[path] = imports
       }

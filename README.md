@@ -18,11 +18,11 @@ The header length is an integer literal denoting the total length of the header.
 ```js
 {
   "version": 0,
-  "main": "<path>" | null,
+  "main": null | "<path>",
   "imports": {
     "<from>": "<to>"
   },
-  "resolutions": {
+  "resolutions": null | {
     "<path>": {
       "<from>": "<to>"
     }
