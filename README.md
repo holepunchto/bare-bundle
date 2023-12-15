@@ -22,6 +22,11 @@ The header length is an integer literal denoting the total length of the header.
   "imports": {
     "<from>": "<to>"
   },
+  "resolutions": {
+    "<path>": {
+      "<from>": "<to>"
+    }
+  },
   "files": {
     "<path>": {
       "offset": number,

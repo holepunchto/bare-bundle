@@ -5,6 +5,7 @@ module.exports = class Bundle {
     this.version = 0
     this.main = null
     this.imports = Object.create(null)
+    this.resolutions = Object.create(null)
 
     this._files = new Map()
   }
@@ -71,6 +72,7 @@ module.exports = class Bundle {
       version: this.version,
       main: this.main,
       imports: this.imports,
+      resolutions: this.resolutions,
       files: {}
     }
 
