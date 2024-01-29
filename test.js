@@ -45,19 +45,19 @@ test('mount', (t) => {
     '/bar': '/bar.js'
   }
 
-  const mounted = bundle.mount('/dir')
+  const mounted = bundle.mount(new URL('file:///dir/'))
 
   t.alike([...mounted], [
-    ['/dir/foo.js', Buffer.from('foo')],
-    ['/dir/bar.js', Buffer.from('bar')]
+    ['file:///dir/foo.js', Buffer.from('foo')],
+    ['file:///dir/bar.js', Buffer.from('bar')]
   ])
 
   t.alike({ ...mounted.imports }, {
-    bar: '/dir/bar.js'
+    bar: 'file:///dir/bar.js'
   })
 
   t.alike({ ...mounted.resolutions }, {
-    '/dir/bar': '/dir/bar.js'
+    'file:///dir/bar': 'file:///dir/bar.js'
   })
 })
 

@@ -18,17 +18,17 @@ The header length is an integer literal denoting the total length of the header.
 ```js
 {
   "version": 0,
-  "main": null | "<path>",
+  "main": null | "<url>",
   "imports": {
     "<from>": "<to>"
   },
   "resolutions": null | {
-    "<path>": {
+    "<url>": {
       "<from>": "<to>"
     }
   },
   "files": {
-    "<path>": {
+    "<url>": {
       "offset": number,
       "length": number
     }
@@ -36,7 +36,7 @@ The header length is an integer literal denoting the total length of the header.
 }
 ```
 
-For each `<path>` in `files`, `offset` provides the byte offset to the file **after** the header and `length` provides the byte length of the file.
+For each `<url>` in `files`, `offset` provides the byte offset to the file **after** the header and `length` provides the byte length of the file.
 
 The bundle may optionally be prefixed with a hashbang, `#!`, for use with script interpreters. The hashbang is ignored during parsing.
 

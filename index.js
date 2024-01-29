@@ -1,5 +1,3 @@
-const path = require('bare-path')
-
 module.exports = class Bundle {
   constructor () {
     this.version = 0
@@ -44,31 +42,35 @@ module.exports = class Bundle {
     return this
   }
 
-  mount (root) {
+  mount (rootURL) {
     const mounted = new Bundle()
 
-    if (this.main) mounted.main = path.join(root, this.main)
+    if (this.main) mounted.main = mount(this.main)
 
-    mounted.imports = mountPaths(this.imports)
+    mounted.imports = mount(this.imports)
 
-    if (this.resolutions) mounted.resolutions = mountPaths(this.resolutions)
+    if (this.resolutions) mounted.resolutions = mount(this.resolutions)
 
     for (const [file, data] of this._files) {
-      mounted._files.set(path.join(root, file), data)
+      mounted._files.set(mount(file), data)
     }
 
     return mounted
 
-    function mountPaths (paths) {
+    function mount (paths) {
       if (typeof paths === 'string') {
-        return path.isAbsolute(paths) ? path.join(root, paths) : paths
+        if (paths === '.' || paths === '..' || paths[0] === '/' || paths.startsWith('./') || paths.startsWith('../')) {
+          return new URL(paths[0] === '/' ? '.' + paths : paths, rootURL).href
+        }
+
+        return paths
       }
 
       if (typeof paths === 'object' && paths !== null) {
         const mounted = Object.create(null)
 
         for (const [key, value] of Object.entries(paths)) {
-          mounted[mountPaths(key)] = mountPaths(value)
+          mounted[mount(key)] = mount(value)
         }
 
         return mounted
