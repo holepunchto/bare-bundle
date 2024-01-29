@@ -1,3 +1,5 @@
+const b4a = require('b4a')
+
 module.exports = class Bundle {
   constructor () {
     this.version = 0
@@ -26,7 +28,7 @@ module.exports = class Bundle {
       alias = null
     } = opts
 
-    this._files.set(file, typeof data === 'string' ? Buffer.from(data) : data)
+    this._files.set(file, typeof data === 'string' ? b4a.from(data) : data)
 
     if (main) this.main = file
     if (alias) this.imports[alias] = file
@@ -102,11 +104,11 @@ module.exports = class Bundle {
       offset += data.byteLength
     }
 
-    const json = Buffer.from(`\n${JSON.stringify(header, null, indent)}\n`)
+    const json = b4a.from(`\n${JSON.stringify(header, null, indent)}\n`)
 
-    const len = Buffer.from(json.byteLength.toString(10))
+    const len = b4a.from(json.byteLength.toString(10))
 
-    const buffer = Buffer.alloc(len.byteLength + json.byteLength + offset)
+    const buffer = b4a.alloc(len.byteLength + json.byteLength + offset)
 
     offset = 0
 
@@ -131,8 +133,7 @@ module.exports = class Bundle {
   static from (buffer) {
     if (this.isBundle(buffer)) return buffer
 
-    if (typeof buffer === 'string') buffer = Buffer.from(buffer)
-    else buffer = Buffer.coerce(buffer)
+    if (typeof buffer === 'string') buffer = b4a.from(buffer)
 
     if (buffer[0] === 0x23 /* # */ && buffer[1] === 0x21 /* ! */) {
       let end = 2
@@ -146,9 +147,9 @@ module.exports = class Bundle {
 
     while (isDecimal(buffer[end])) end++
 
-    const len = parseInt(buffer.toString('utf8', 0, end), 10)
+    const len = parseInt(b4a.toString(buffer, 'utf8', 0, end), 10)
 
-    const header = JSON.parse(buffer.toString('utf8', end, end + len))
+    const header = JSON.parse(b4a.toString(buffer, 'utf8', end, end + len))
 
     const bundle = new Bundle()
 
