@@ -59,9 +59,7 @@ module.exports = class Bundle {
 
     function mount (paths) {
       if (typeof paths === 'string') {
-        if (paths === '.' || paths === '..' || paths[0] === '/' || paths.startsWith('./') || paths.startsWith('../')) {
-          return new URL(paths[0] === '/' ? '.' + paths : paths, rootURL).href
-        }
+        if (paths[0] === '/') return new URL('.' + paths, rootURL).href
 
         return paths
       }
