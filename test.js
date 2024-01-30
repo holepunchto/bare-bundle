@@ -8,6 +8,7 @@ test('basic', (t) => {
     .write('/foo.js', 'foo', { main: true })
     .write('/bar.js', 'bar', { alias: 'bar' })
 
+  t.is(bundle.version, 0)
   t.is(bundle.main, '/foo.js')
 
   t.alike(bundle.read('/foo.js'), Buffer.from('foo'))
@@ -42,7 +43,9 @@ test('mount', (t) => {
   }
 
   bundle.resolutions = {
-    '/bar': '/bar.js'
+    '/bar.js': {
+      foo: '/foo.js'
+    }
   }
 
   const mounted = bundle.mount(new URL('file:///dir/'))
@@ -52,12 +55,14 @@ test('mount', (t) => {
     ['file:///dir/bar.js', Buffer.from('bar')]
   ])
 
-  t.alike({ ...mounted.imports }, {
+  t.alike(mounted.imports, {
     bar: 'file:///dir/bar.js'
   })
 
-  t.alike({ ...mounted.resolutions }, {
-    'file:///dir/bar': 'file:///dir/bar.js'
+  t.alike(mounted.resolutions, {
+    'file:///dir/bar.js': {
+      foo: 'file:///dir/foo.js'
+    }
   })
 })
 

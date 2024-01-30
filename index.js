@@ -1,13 +1,47 @@
 const b4a = require('b4a')
 
 module.exports = class Bundle {
-  constructor () {
-    this.version = 0
-    this.main = null
-    this.imports = Object.create(null)
-    this.resolutions = null
+  static get version () {
+    return 0
+  }
 
+  constructor () {
+    this._main = null
+    this._imports = {}
+    this._resolutions = null
     this._files = new Map()
+  }
+
+  get version () {
+    return Bundle.version
+  }
+
+  get main () {
+    return this._main
+  }
+
+  set main (value) {
+    if (typeof value !== 'string' && value !== null) {
+      throw new TypeError(`Main must be a string or null. Received type ${typeof value} (${value})`)
+    }
+
+    this._main = value
+  }
+
+  get imports () {
+    return this._imports
+  }
+
+  set imports (value) {
+    this._imports = cloneImportsMap(value)
+  }
+
+  get resolutions () {
+    return this._resolutions
+  }
+
+  set resolutions (value) {
+    this._resolutions = cloneResolutionsMap(value)
   }
 
   [Symbol.iterator] () {
@@ -23,6 +57,10 @@ module.exports = class Bundle {
   }
 
   write (file, data, opts = {}) {
+    if (typeof file !== 'string') {
+      throw new TypeError(`File path must be a string. Received type ${typeof file} (${file})`)
+    }
+
     const {
       main = false,
       alias = null
@@ -30,8 +68,8 @@ module.exports = class Bundle {
 
     this._files.set(file, typeof data === 'string' ? b4a.from(data) : data)
 
-    if (main) this.main = file
-    if (alias) this.imports[alias] = file
+    if (main) this._main = file
+    if (alias) this._imports[alias] = file
 
     return this
   }
@@ -44,40 +82,22 @@ module.exports = class Bundle {
     return this
   }
 
-  mount (rootURL) {
+  mount (root) {
     const mounted = new Bundle()
 
-    if (this.main) mounted.main = mount(this.main)
+    // Go through the private API properties as we're operating on already
+    // validated values.
 
-    mounted.imports = mount(this.imports)
+    mounted._main = mountBundlePath(this._main, root)
+    mounted._imports = mountBundlePath(this._imports, root)
 
-    if (this.resolutions) mounted.resolutions = mount(this.resolutions)
+    if (this._resolutions) mounted._resolutions = mountBundlePath(this._resolutions, root)
 
     for (const [file, data] of this._files) {
-      mounted._files.set(mount(file), data)
+      mounted._files.set(mountBundlePath(file, root), data)
     }
 
     return mounted
-
-    function mount (paths) {
-      if (typeof paths === 'string') {
-        if (paths[0] === '/') return new URL('.' + paths, rootURL).href
-
-        return paths
-      }
-
-      if (typeof paths === 'object' && paths !== null) {
-        const mounted = Object.create(null)
-
-        for (const [key, value] of Object.entries(paths)) {
-          mounted[mount(key)] = mount(value)
-        }
-
-        return mounted
-      }
-
-      return null
-    }
   }
 
   toBuffer (opts = {}) {
@@ -153,21 +173,13 @@ module.exports = class Bundle {
 
     const bundle = new Bundle()
 
-    bundle.main = header.main || null
+    // Go through the public API setters to ensure that the header fields are
+    // validated.
 
-    if (header.imports) {
-      for (const [from, to] of Object.entries(header.imports)) {
-        bundle.imports[from] = to
-      }
-    }
+    bundle.main = header.main
+    bundle.imports = header.imports
 
-    if (header.resolutions) {
-      bundle.resolutions = Object.create(null)
-
-      for (const [path, imports] of Object.entries(header.resolutions)) {
-        bundle.resolutions[path] = imports
-      }
-    }
+    if (header.resolutions) bundle.resolutions = header.resolutions
 
     let offset = end + len
 
@@ -186,4 +198,68 @@ module.exports = class Bundle {
 
 function isDecimal (c) {
   return c >= 0x30 && c <= 0x39
+}
+
+function cloneImportsMap (value) {
+  if (typeof value === 'object' && value !== null) {
+    const imports = {}
+
+    for (const entry of Object.entries(value)) {
+      imports[entry[0]] = cloneImportsMapEntry(entry[1])
+    }
+
+    return imports
+  }
+
+  throw new TypeError(`Imports map must be an object. Received type ${typeof value} (${value})`)
+}
+
+function cloneImportsMapEntry (value) {
+  if (typeof value === 'string') return value
+
+  if (typeof value === 'object' && value !== null) {
+    const imports = {}
+
+    for (const entry of Object.entries(value)) {
+      imports[entry[0]] = cloneImportsMapEntry(entry[1])
+    }
+
+    return imports
+  }
+
+  throw new TypeError(`Imports map entry must be a string or object. Received type ${typeof value} (${value})`)
+}
+
+function cloneResolutionsMap (value) {
+  if (typeof value === 'object' && value !== null) {
+    const resolutions = {}
+
+    for (const entry of Object.entries(value)) {
+      resolutions[entry[0]] = cloneImportsMap(entry[1])
+    }
+
+    return resolutions
+  }
+
+  throw new TypeError(`Resolution map must be an object. Received type ${typeof value} (${value})`)
+}
+
+function mountBundlePath (value, root) {
+  if (typeof value === 'string') {
+    if (value[0] === '/') return new URL('.' + value, root).href
+
+    return value
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    const mounted = {}
+
+    for (const entry of Object.entries(value)) {
+      mounted[mountBundlePath(entry[0], root)] = mountBundlePath(entry[1], root)
+    }
+
+    return mounted
+  }
+
+  return null
 }
