@@ -8,7 +8,7 @@ module.exports = class Bundle {
   constructor () {
     this._main = null
     this._imports = {}
-    this._resolutions = null
+    this._resolutions = {}
     this._files = new Map()
   }
 
@@ -178,9 +178,8 @@ module.exports = class Bundle {
     // Go through the public API setters to ensure that the header fields are
     // validated.
 
-    bundle.main = header.main
-    bundle.imports = header.imports
-
+    if (header.main) bundle.main = header.main
+    if (header.imports) bundle.imports = header.imports
     if (header.resolutions) bundle.resolutions = header.resolutions
 
     let offset = end + len
