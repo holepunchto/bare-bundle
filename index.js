@@ -63,13 +63,15 @@ module.exports = class Bundle {
 
     const {
       main = false,
-      alias = null
+      alias = null,
+      resolutions = null
     } = opts
 
     this._files.set(file, typeof data === 'string' ? b4a.from(data) : data)
 
     if (main) this._main = file
     if (alias) this._imports[alias] = file
+    if (resolutions) this._resolutions[file] = cloneResolutionsMap(resolutions)
 
     return this
   }
