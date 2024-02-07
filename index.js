@@ -71,7 +71,7 @@ module.exports = class Bundle {
 
     if (main) this._main = file
     if (alias) this._imports[alias] = file
-    if (resolutions) this._resolutions[file] = cloneResolutionsMap(resolutions)
+    if (resolutions) this._resolutions[file] = cloneImportsMap(resolutions)
 
     return this
   }
