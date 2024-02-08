@@ -48,6 +48,10 @@ module.exports = class Bundle {
     return this._files[Symbol.iterator]()
   }
 
+  keys () {
+    return this._files.keys()
+  }
+
   exists (file) {
     return this._files.has(file)
   }

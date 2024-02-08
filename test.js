@@ -17,6 +17,8 @@ test('basic', (t) => {
   const buffer = bundle.toBuffer()
 
   t.alike(bundle, Bundle.from(buffer))
+
+  t.alike([...bundle.keys()], ['/foo.js', '/bar.js'])
 })
 
 test('map', (t) => {
