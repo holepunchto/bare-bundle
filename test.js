@@ -94,3 +94,17 @@ test('hashbang', (t) => {
 
   t.alike(bundle, parsed)
 })
+
+test('reproducible buffers', (t) => {
+  const a = new Bundle()
+  a
+    .write('/foo.js', 'foo')
+    .write('/bar.js', 'bar')
+
+  const b = new Bundle()
+  b
+    .write('/bar.js', 'bar')
+    .write('/foo.js', 'foo')
+
+  t.alike(a.toBuffer(), b.toBuffer())
+})

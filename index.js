@@ -119,9 +119,13 @@ module.exports = class Bundle {
       files: {}
     }
 
+    const files = [...this._files].sort(([a], [b]) =>
+      a < b ? -1 : a > b ? 1 : 0
+    )
+
     let offset = 0
 
-    for (const [file, data] of this._files) {
+    for (const [file, data] of files) {
       header.files[file] = {
         offset,
         length: data.byteLength
@@ -144,7 +148,7 @@ module.exports = class Bundle {
     buffer.set(json, offset)
     offset += json.byteLength
 
-    for (const [, data] of this._files) {
+    for (const [, data] of files) {
       buffer.set(data, offset)
       offset += data.byteLength
     }
