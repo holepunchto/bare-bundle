@@ -39,6 +39,7 @@ test('mount', (t) => {
   bundle
     .write('/foo.js', 'foo')
     .write('/bar.js', 'bar')
+    .write('/baz.txt', 'baz', { asset: true })
 
   bundle.imports = {
     bar: '/bar.js'
@@ -52,10 +53,11 @@ test('mount', (t) => {
 
   const mounted = bundle.mount(new URL('file:///dir/'))
 
-  t.alike([...mounted], [
-    ['file:///dir/foo.js', Buffer.from('foo')],
-    ['file:///dir/bar.js', Buffer.from('bar')]
-  ])
+  t.alike(mounted.files, {
+    'file:///dir/foo.js': Buffer.from('foo'),
+    'file:///dir/bar.js': Buffer.from('bar'),
+    'file:///dir/baz.txt': Buffer.from('baz')
+  })
 
   t.alike(mounted.imports, {
     bar: 'file:///dir/bar.js'
@@ -66,6 +68,10 @@ test('mount', (t) => {
       foo: 'file:///dir/foo.js'
     }
   })
+
+  t.alike(mounted.assets, [
+    'file:///dir/baz.txt'
+  ])
 })
 
 test('iterate', (t) => {

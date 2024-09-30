@@ -9,6 +9,8 @@ module.exports = class Bundle {
     this._main = null
     this._imports = {}
     this._resolutions = {}
+    this._addons = []
+    this._assets = []
     this._files = new Map()
   }
 
@@ -44,6 +46,26 @@ module.exports = class Bundle {
     this._resolutions = cloneResolutionsMap(value)
   }
 
+  get addons () {
+    return this._addons
+  }
+
+  set addons (value) {
+    this._addons = cloneFilesList(value, 'Addons')
+  }
+
+  get assets () {
+    return this._assets
+  }
+
+  set assets (value) {
+    this._assets = cloneFilesList(value, 'Assets')
+  }
+
+  get files () {
+    return Object.fromEntries(this._files.entries())
+  }
+
   [Symbol.iterator] () {
     return this._files[Symbol.iterator]()
   }
@@ -68,7 +90,9 @@ module.exports = class Bundle {
     const {
       main = false,
       alias = null,
-      resolutions = null
+      resolutions = null,
+      addon = false,
+      asset = false
     } = opts
 
     this._files.set(file, typeof data === 'string' ? b4a.from(data) : data)
@@ -76,6 +100,8 @@ module.exports = class Bundle {
     if (main) this._main = file
     if (alias) this._imports[alias] = file
     if (resolutions) this._resolutions[file] = cloneImportsMap(resolutions)
+    if (addon) this._addons.push(file)
+    if (asset) this._assets.push(file)
 
     return this
   }
@@ -103,6 +129,9 @@ module.exports = class Bundle {
       mounted._files.set(mountBundlePath(file, root), data)
     }
 
+    mounted._addons = mountBundlePath(this._addons, root)
+    mounted._assets = mountBundlePath(this._assets, root)
+
     return mounted
   }
 
@@ -116,6 +145,8 @@ module.exports = class Bundle {
       main: this.main,
       imports: this.imports,
       resolutions: this.resolutions,
+      addons: this.addons.sort(),
+      assets: this.assets.sort(),
       files: {}
     }
 
@@ -156,6 +187,27 @@ module.exports = class Bundle {
     return buffer
   }
 
+  inspect () {
+    return {
+      __proto__: { constructor: Bundle },
+
+      main: this.main,
+      imports: this.imports,
+      resolutions: this.resolutions,
+      addons: this.addons,
+      assets: this.assets,
+      files: this.files
+    }
+  }
+
+  [Symbol.for('bare.inspect')] () {
+    return this.inspect()
+  }
+
+  [Symbol.for('nodejs.util.inspect.custom')] () {
+    return this.inspect()
+  }
+
   static isBundle (value) {
     return value instanceof Bundle
   }
@@ -189,6 +241,8 @@ module.exports = class Bundle {
     if (header.main) bundle.main = header.main
     if (header.imports) bundle.imports = header.imports
     if (header.resolutions) bundle.resolutions = header.resolutions
+    if (header.addons) bundle.addons = header.addons
+    if (header.assets) bundle.assets = header.assets
 
     let offset = end + len
 
@@ -250,7 +304,25 @@ function cloneResolutionsMap (value) {
     return resolutions
   }
 
-  throw new TypeError(`Resolution map must be an object. Received type ${typeof value} (${value})`)
+  throw new TypeError(`Resolutions map must be an object. Received type ${typeof value} (${value})`)
+}
+
+function cloneFilesList (value, name) {
+  if (Array.isArray(value)) {
+    const files = []
+
+    for (const entry of value) {
+      if (typeof entry !== 'string') {
+        throw new TypeError(`${name} entry must be a string. Received type ${typeof entry} (${entry})`)
+      }
+
+      files.push(entry)
+    }
+
+    return files
+  }
+
+  throw new TypeError(`${name} list must be an array. Received type ${typeof value} (${value})`)
 }
 
 function mountBundlePath (value, root) {
@@ -258,6 +330,16 @@ function mountBundlePath (value, root) {
     if (value[0] === '/') return new URL('.' + value, root).href
 
     return value
+  }
+
+  if (Array.isArray(value)) {
+    const mounted = []
+
+    for (const entry of value) {
+      mounted.push(mountBundlePath(entry, root))
+    }
+
+    return mounted
   }
 
   if (typeof value === 'object' && value !== null) {
