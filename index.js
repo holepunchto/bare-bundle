@@ -1,6 +1,6 @@
 const b4a = require('b4a')
 
-module.exports = class Bundle {
+const Bundle = module.exports = exports = class Bundle {
   static get version () {
     return 0
   }
@@ -207,56 +207,67 @@ module.exports = class Bundle {
   [Symbol.for('nodejs.util.inspect.custom')] () {
     return this.inspect()
   }
+}
 
-  static isBundle (value) {
-    return value instanceof Bundle
+exports.isBundle = function isBundle (value) {
+  return value instanceof Bundle
+}
+
+exports.from = function from (value) {
+  // from(string)
+  if (typeof value === 'string') return fromString(value)
+
+  // from(buffer)
+  if (b4a.isBuffer(value)) return fromBuffer(value)
+
+  // from(bundle)
+  return value
+}
+
+function fromString (string) {
+  return fromBuffer(b4a.from(string))
+}
+
+function fromBuffer (buffer) {
+  if (buffer[0] === 0x23 /* # */ && buffer[1] === 0x21 /* ! */) {
+    let end = 2
+
+    while (buffer[end] !== 0xa /* \n */) end++
+
+    buffer = buffer.subarray(end + 1)
   }
 
-  static from (buffer) {
-    if (this.isBundle(buffer)) return buffer
+  let end = 0
 
-    if (typeof buffer === 'string') buffer = b4a.from(buffer)
+  while (isDecimal(buffer[end])) end++
 
-    if (buffer[0] === 0x23 /* # */ && buffer[1] === 0x21 /* ! */) {
-      let end = 2
+  const len = parseInt(b4a.toString(buffer, 'utf8', 0, end), 10)
 
-      while (buffer[end] !== 0xa /* \n */) end++
+  const header = JSON.parse(b4a.toString(buffer, 'utf8', end, end + len))
 
-      buffer = buffer.subarray(end + 1)
-    }
+  const bundle = new Bundle()
 
-    let end = 0
+  // Go through the public API setters to ensure that the header fields are
+  // validated.
 
-    while (isDecimal(buffer[end])) end++
+  if (header.main) bundle.main = header.main
+  if (header.imports) bundle.imports = header.imports
+  if (header.resolutions) bundle.resolutions = header.resolutions
+  if (header.addons) bundle.addons = header.addons
+  if (header.assets) bundle.assets = header.assets
 
-    const len = parseInt(b4a.toString(buffer, 'utf8', 0, end), 10)
+  let offset = end + len
 
-    const header = JSON.parse(b4a.toString(buffer, 'utf8', end, end + len))
+  for (const [file, info] of Object.entries(header.files)) {
+    bundle.write(
+      file,
+      buffer.subarray(offset, offset + info.length)
+    )
 
-    const bundle = new Bundle()
-
-    // Go through the public API setters to ensure that the header fields are
-    // validated.
-
-    if (header.main) bundle.main = header.main
-    if (header.imports) bundle.imports = header.imports
-    if (header.resolutions) bundle.resolutions = header.resolutions
-    if (header.addons) bundle.addons = header.addons
-    if (header.assets) bundle.assets = header.assets
-
-    let offset = end + len
-
-    for (const [file, info] of Object.entries(header.files)) {
-      bundle.write(
-        file,
-        buffer.subarray(offset, offset + info.length)
-      )
-
-      offset += info.length
-    }
-
-    return bundle
+    offset += info.length
   }
+
+  return bundle
 }
 
 function isDecimal (c) {
