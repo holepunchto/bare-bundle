@@ -74,6 +74,10 @@ const Bundle = module.exports = exports = class Bundle {
     return this._files.keys()
   }
 
+  size (file) {
+    return this._files.has(file) ? this._files.get(file).byteLength : 0
+  }
+
   exists (file) {
     return this._files.has(file)
   }
@@ -150,19 +154,15 @@ const Bundle = module.exports = exports = class Bundle {
       files: {}
     }
 
-    const files = [...this._files].sort(([a], [b]) =>
-      a < b ? -1 : a > b ? 1 : 0
-    )
+    const files = [...this._files.keys()].sort()
 
     let offset = 0
 
-    for (const [file, data] of files) {
-      header.files[file] = {
-        offset,
-        length: data.byteLength
-      }
+    for (const file of files) {
+      const length = this.size(file)
 
-      offset += data.byteLength
+      header.files[file] = { offset, length }
+      offset += length
     }
 
     const json = b4a.from(`\n${JSON.stringify(header, null, indent)}\n`)
@@ -179,9 +179,9 @@ const Bundle = module.exports = exports = class Bundle {
     buffer.set(json, offset)
     offset += json.byteLength
 
-    for (const [, data] of files) {
-      buffer.set(data, offset)
-      offset += data.byteLength
+    for (const file of files) {
+      buffer.set(this.read(file), offset)
+      offset += this.size(file)
     }
 
     return buffer
