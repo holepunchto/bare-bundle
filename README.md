@@ -30,7 +30,8 @@ The header length is an integer literal denoting the total length of the header.
   "files": {
     "<url>": {
       "offset": number,
-      "length": number
+      "length": number,
+      "mode": number
     }
   }
 }

@@ -1,11 +1,57 @@
 const b4a = require('b4a')
 
+class MemoryFile {
+  constructor (data, opts = {}) {
+    const {
+      executable = false,
+      mode = executable ? 0o755 : 0o644
+    } = opts
+
+    this._data = typeof data === 'string' ? b4a.from(data) : data
+    this._mode = mode
+  }
+
+  size () {
+    return this._data.byteLength
+  }
+
+  mode () {
+    return this._mode
+  }
+
+  read () {
+    return this._data
+  }
+
+  inspect () {
+    return {
+      __proto__: { constructor: MemoryFile },
+
+      data: this._data,
+      mode: this._mode.toString(8)
+    }
+  }
+
+  [Symbol.for('bare.inspect')] () {
+    return this.inspect()
+  }
+
+  [Symbol.for('nodejs.util.inspect.custom')] () {
+    return this.inspect()
+  }
+}
+
 const Bundle = module.exports = exports = class Bundle {
   static get version () {
     return 0
   }
 
-  constructor () {
+  constructor (opts = {}) {
+    const {
+      File = MemoryFile
+    } = opts
+
+    this._File = File
     this._main = null
     this._imports = {}
     this._resolutions = {}
@@ -66,29 +112,41 @@ const Bundle = module.exports = exports = class Bundle {
     return Object.fromEntries(this._files.entries())
   }
 
-  [Symbol.iterator] () {
-    return this._files[Symbol.iterator]()
+  * [Symbol.iterator] () {
+    for (const [key, file] of this._files) {
+      yield [key, file.read(), file.mode()]
+    }
   }
 
   keys () {
     return this._files.keys()
   }
 
-  size (file) {
-    return this._files.has(file) ? this._files.get(file).byteLength : 0
+  exists (key) {
+    return this._files.has(key)
   }
 
-  exists (file) {
-    return this._files.has(file)
+  size (key) {
+    const file = this._files.get(key) || null
+    if (file === null) return 0
+    return file.size()
   }
 
-  read (file) {
-    return this._files.get(file) || null
+  mode (key) {
+    const file = this._files.get(key) || null
+    if (file === null) return 0
+    return file.mode()
   }
 
-  write (file, data, opts = {}) {
-    if (typeof file !== 'string') {
-      throw new TypeError(`File path must be a string. Received type ${typeof file} (${file})`)
+  read (key) {
+    const file = this._files.get(key) || null
+    if (file === null) return null
+    return file.read()
+  }
+
+  write (key, data, opts = {}) {
+    if (typeof key !== 'string') {
+      throw new TypeError(`File path must be a string. Received type ${typeof key} (${key})`)
     }
 
     const {
@@ -99,21 +157,13 @@ const Bundle = module.exports = exports = class Bundle {
       asset = false
     } = opts
 
-    this._files.set(file, typeof data === 'string' ? b4a.from(data) : data)
+    this._files.set(key, new MemoryFile(data, opts))
 
-    if (main) this._main = file
-    if (alias) this._imports[alias] = file
-    if (resolutions) this._resolutions[file] = cloneImportsMap(resolutions)
-    if (addon) this._addons.push(file)
-    if (asset) this._assets.push(file)
-
-    return this
-  }
-
-  map (fn) {
-    this._files = new Map(
-      [...this._files].map(([file, data]) => [file, fn(data, file)])
-    )
+    if (main) this._main = key
+    if (alias) this._imports[alias] = key
+    if (resolutions) this._resolutions[key] = cloneImportsMap(resolutions)
+    if (addon) this._addons.push(key)
+    if (asset) this._assets.push(key)
 
     return this
   }
@@ -129,8 +179,8 @@ const Bundle = module.exports = exports = class Bundle {
 
     if (this._resolutions) mounted._resolutions = mountBundlePath(this._resolutions, root)
 
-    for (const [file, data] of this._files) {
-      mounted._files.set(mountBundlePath(file, root), data)
+    for (const [key, file] of this._files) {
+      mounted._files.set(mountBundlePath(key, root), file)
     }
 
     mounted._addons = mountBundlePath(this._addons, root)
@@ -154,14 +204,14 @@ const Bundle = module.exports = exports = class Bundle {
       files: {}
     }
 
-    const files = [...this._files.keys()].sort()
+    const keys = [...this._files.keys()].sort()
 
     let offset = 0
 
-    for (const file of files) {
-      const length = this.size(file)
+    for (const key of keys) {
+      const length = this.size(key)
 
-      header.files[file] = { offset, length }
+      header.files[key] = { offset, length, mode: this.mode(key) }
       offset += length
     }
 
@@ -179,9 +229,9 @@ const Bundle = module.exports = exports = class Bundle {
     buffer.set(json, offset)
     offset += json.byteLength
 
-    for (const file of files) {
-      buffer.set(this.read(file), offset)
-      offset += this.size(file)
+    for (const key of keys) {
+      buffer.set(this.read(key), offset)
+      offset += this.size(key)
     }
 
     return buffer
@@ -261,7 +311,10 @@ function fromBuffer (buffer) {
   for (const [file, info] of Object.entries(header.files)) {
     bundle.write(
       file,
-      buffer.subarray(offset, offset + info.length)
+      buffer.subarray(offset, offset + info.length),
+      {
+        mode: info.mode || 0o644
+      }
     )
 
     offset += info.length
