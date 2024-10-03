@@ -7,30 +7,22 @@ test('basic', (t) => {
   bundle
     .write('/foo.js', 'foo', { main: true })
     .write('/bar.js', 'bar', { alias: 'bar' })
+    .write('/baz', 'baz', { executable: true })
 
   t.is(bundle.version, 0)
   t.is(bundle.main, '/foo.js')
+  t.is(bundle.mode('/baz'), 0o755)
 
   t.alike(bundle.read('/foo.js'), Buffer.from('foo'))
   t.alike(bundle.read('/bar.js'), Buffer.from('bar'))
 
-  const buffer = bundle.toBuffer()
+  t.alike([...bundle.keys()], ['/foo.js', '/bar.js', '/baz'])
 
-  t.alike(bundle, Bundle.from(buffer))
+  const copy = Bundle.from(bundle.toBuffer())
 
-  t.alike([...bundle.keys()], ['/foo.js', '/bar.js'])
-})
+  t.alike(bundle, copy)
 
-test('map', (t) => {
-  const bundle = new Bundle()
-
-  bundle
-    .write('/foo.js', 'foo')
-    .write('/bar.js', 'bar')
-    .map((data, file) => Buffer.concat([data, Buffer.from('baz')]))
-
-  t.alike(bundle.read('/foo.js'), Buffer.from('foobaz'))
-  t.alike(bundle.read('/bar.js'), Buffer.from('barbaz'))
+  t.is(copy.mode('/baz'), 0o755)
 })
 
 test('mount', (t) => {
@@ -53,11 +45,11 @@ test('mount', (t) => {
 
   const mounted = bundle.mount(new URL('file:///dir/'))
 
-  t.alike(mounted.files, {
-    'file:///dir/foo.js': Buffer.from('foo'),
-    'file:///dir/bar.js': Buffer.from('bar'),
-    'file:///dir/baz.txt': Buffer.from('baz')
-  })
+  t.alike([...mounted], [
+    ['file:///dir/foo.js', Buffer.from('foo'), 0o644],
+    ['file:///dir/bar.js', Buffer.from('bar'), 0o644],
+    ['file:///dir/baz.txt', Buffer.from('baz'), 0o644]
+  ])
 
   t.alike(mounted.imports, {
     bar: 'file:///dir/bar.js'
@@ -79,11 +71,11 @@ test('iterate', (t) => {
 
   bundle
     .write('/foo.js', 'foo')
-    .write('/bar.js', 'bar')
+    .write('/bar.js', 'bar', { mode: 0o655 })
 
   t.alike([...bundle], [
-    ['/foo.js', Buffer.from('foo')],
-    ['/bar.js', Buffer.from('bar')]
+    ['/foo.js', Buffer.from('foo'), 0o644],
+    ['/bar.js', Buffer.from('bar'), 0o655]
   ])
 })
 
