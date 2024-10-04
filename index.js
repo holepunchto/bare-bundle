@@ -174,17 +174,17 @@ const Bundle = module.exports = exports = class Bundle {
     // Go through the private API properties as we're operating on already
     // validated values.
 
-    mounted._main = mountBundlePath(this._main, root)
-    mounted._imports = mountBundlePath(this._imports, root)
+    if (this._main) mounted._main = mountPath(this._main, root)
 
-    if (this._resolutions) mounted._resolutions = mountBundlePath(this._resolutions, root)
+    mounted._imports = mountImportsMap(this._imports, root)
+    mounted._resolutions = mountResolutionsMap(this._resolutions, root)
 
     for (const [key, file] of this._files) {
-      mounted._files.set(mountBundlePath(key, root), file)
+      mounted._files.set(mountPath(key, root), file)
     }
 
-    mounted._addons = mountBundlePath(this._addons, root)
-    mounted._assets = mountBundlePath(this._assets, root)
+    mounted._addons = mountFilesList(this._addons, root)
+    mounted._assets = mountFilesList(this._assets, root)
 
     return mounted
   }
@@ -389,32 +389,50 @@ function cloneFilesList (value, name) {
   throw new TypeError(`${name} list must be an array. Received type ${typeof value} (${value})`)
 }
 
-function mountBundlePath (value, root) {
-  if (typeof value === 'string') {
-    if (value[0] === '/') return new URL('.' + value, root).href
+function mountPath (value, root) {
+  if (value[0] === '/') return new URL('.' + value, root).href
 
-    return value
+  return value
+}
+
+function mountImportsMap (value, root) {
+  const imports = {}
+
+  for (const entry of Object.entries(value)) {
+    imports[entry[0]] = mountImportsMapEntry(entry[1], root)
   }
 
-  if (Array.isArray(value)) {
-    const mounted = []
+  return imports
+}
 
-    for (const entry of value) {
-      mounted.push(mountBundlePath(entry, root))
-    }
+function mountImportsMapEntry (value, root) {
+  if (typeof value === 'string') return mountPath(value, root)
 
-    return mounted
+  const imports = {}
+
+  for (const entry of Object.entries(value)) {
+    imports[entry[0]] = mountImportsMapEntry(entry[1], root)
   }
 
-  if (typeof value === 'object' && value !== null) {
-    const mounted = {}
+  return imports
+}
 
-    for (const entry of Object.entries(value)) {
-      mounted[mountBundlePath(entry[0], root)] = mountBundlePath(entry[1], root)
-    }
+function mountResolutionsMap (value, root) {
+  const resolutions = {}
 
-    return mounted
+  for (const entry of Object.entries(value)) {
+    resolutions[mountPath(entry[0], root)] = mountImportsMap(entry[1], root)
   }
 
-  return null
+  return resolutions
+}
+
+function mountFilesList (value, root) {
+  const files = []
+
+  for (const entry of value) {
+    files.push(mountPath(entry, root))
+  }
+
+  return files
 }
