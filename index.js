@@ -168,7 +168,7 @@ const Bundle = module.exports = exports = class Bundle {
     return this
   }
 
-  mount (root) {
+  mount (root, opts = {}) {
     const mounted = new Bundle()
 
     // Go through the private API properties as we're operating on already
@@ -176,8 +176,8 @@ const Bundle = module.exports = exports = class Bundle {
 
     if (this._main) mounted._main = mountPath(this._main, root)
 
-    mounted._imports = mountImportsMap(this._imports, root)
-    mounted._resolutions = mountResolutionsMap(this._resolutions, root)
+    mounted._imports = mountImportsMap(this._imports, root, null, opts)
+    mounted._resolutions = mountResolutionsMap(this._resolutions, root, opts)
 
     for (const [key, file] of this._files) {
       mounted._files.set(mountPath(key, root), file)
@@ -395,33 +395,33 @@ function mountPath (value, root) {
   return value
 }
 
-function mountImportsMap (value, root) {
+function mountImportsMap (value, root, conditionalRoot, opts) {
+  const { conditions = {} } = opts
+
   const imports = {}
 
   for (const entry of Object.entries(value)) {
-    imports[entry[0]] = mountImportsMapEntry(entry[1], root)
+    const condition = entry[0]
+
+    imports[condition] = mountImportsMapEntry(entry[1], root, conditionalRoot || conditions[condition], opts)
   }
 
   return imports
 }
 
-function mountImportsMapEntry (value, root) {
-  if (typeof value === 'string') return mountPath(value, root)
+function mountImportsMapEntry (value, root, conditionalRoot, opts) {
+  const { conditions = {} } = opts
 
-  const imports = {}
+  if (typeof value === 'string') return mountPath(value, conditionalRoot || conditions.default || root)
 
-  for (const entry of Object.entries(value)) {
-    imports[entry[0]] = mountImportsMapEntry(entry[1], root)
-  }
-
-  return imports
+  return mountImportsMap(value, root, conditionalRoot, opts)
 }
 
-function mountResolutionsMap (value, root) {
+function mountResolutionsMap (value, root, opts) {
   const resolutions = {}
 
   for (const entry of Object.entries(value)) {
-    resolutions[mountPath(entry[0], root)] = mountImportsMap(entry[1], root)
+    resolutions[mountPath(entry[0], root)] = mountImportsMap(entry[1], root, null, opts)
   }
 
   return resolutions

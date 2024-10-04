@@ -66,6 +66,36 @@ test('mount', (t) => {
   ])
 })
 
+test('mount, resolutions map', (t) => {
+  const bundle = new Bundle()
+
+  bundle
+    .write('/foo.js', 'foo')
+    .write('/bar.txt', 'bar', { asset: true })
+
+  bundle.resolutions = {
+    '/foo.js': {
+      bar: {
+        asset: '/bar.txt'
+      }
+    }
+  }
+
+  const mounted = bundle.mount(new URL('file:///dir/'), {
+    conditions: {
+      asset: new URL('file:///assets/')
+    }
+  })
+
+  t.alike(mounted.resolutions, {
+    'file:///dir/foo.js': {
+      bar: {
+        asset: 'file:///assets/bar.txt'
+      }
+    }
+  })
+})
+
 test('iterate', (t) => {
   const bundle = new Bundle()
 
