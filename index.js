@@ -52,6 +52,7 @@ const Bundle = module.exports = exports = class Bundle {
     } = opts
 
     this._File = File
+    this._id = null
     this._main = null
     this._imports = {}
     this._resolutions = {}
@@ -62,6 +63,18 @@ const Bundle = module.exports = exports = class Bundle {
 
   get version () {
     return Bundle.version
+  }
+
+  get id () {
+    return this._id
+  }
+
+  set id (value) {
+    if (typeof value !== 'string' && value !== null) {
+      throw new TypeError(`ID must be a string or null. Received type ${typeof value} (${value})`)
+    }
+
+    this._id = value
   }
 
   get main () {
@@ -196,6 +209,7 @@ const Bundle = module.exports = exports = class Bundle {
 
     const header = {
       version: this.version,
+      id: this.id,
       main: this.main,
       imports: this.imports,
       resolutions: this.resolutions,
@@ -241,6 +255,7 @@ const Bundle = module.exports = exports = class Bundle {
     return {
       __proto__: { constructor: Bundle },
 
+      id: this.id,
       main: this.main,
       imports: this.imports,
       resolutions: this.resolutions,
@@ -300,6 +315,7 @@ function fromBuffer (buffer) {
   // Go through the public API setters to ensure that the header fields are
   // validated.
 
+  if (header.id) bundle.id = header.id
   if (header.main) bundle.main = header.main
   if (header.imports) bundle.imports = header.imports
   if (header.resolutions) bundle.resolutions = header.resolutions
