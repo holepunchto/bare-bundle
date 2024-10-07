@@ -4,11 +4,14 @@ const Bundle = require('.')
 test('basic', (t) => {
   const bundle = new Bundle()
 
+  bundle.id = 'my-bundle'
+
   bundle
     .write('/foo.js', 'foo', { main: true })
     .write('/bar.js', 'bar', { alias: 'bar' })
     .write('/baz', 'baz', { executable: true })
 
+  t.is(bundle.id, 'my-bundle')
   t.is(bundle.version, 0)
   t.is(bundle.main, '/foo.js')
   t.is(bundle.mode('/baz'), 0o755)
