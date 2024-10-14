@@ -165,7 +165,7 @@ const Bundle = module.exports = exports = class Bundle {
     const {
       main = false,
       alias = null,
-      resolutions = null,
+      imports = null,
       addon = false,
       asset = false
     } = opts
@@ -174,7 +174,7 @@ const Bundle = module.exports = exports = class Bundle {
 
     if (main) this._main = key
     if (alias) this._imports[alias] = key
-    if (resolutions) this._resolutions[key] = cloneImportsMap(resolutions)
+    if (imports) this._resolutions[key] = cloneImportsMap(imports)
     if (addon) this._addons.push(key)
     if (asset) this._assets.push(key)
 
