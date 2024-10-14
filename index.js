@@ -187,13 +187,13 @@ const Bundle = module.exports = exports = class Bundle {
     // Go through the private API properties as we're operating on already
     // validated values.
 
-    if (this._main) mounted._main = mountPath(this._main, root)
+    if (this._main) mounted._main = mountSpecifier(this._main, root)
 
     mounted._imports = mountImportsMap(this._imports, root, null, opts)
     mounted._resolutions = mountResolutionsMap(this._resolutions, root, opts)
 
     for (const [key, file] of this._files) {
-      mounted._files.set(mountPath(key, root), file)
+      mounted._files.set(mountSpecifier(key, root), file)
     }
 
     mounted._addons = mountFilesList(this._addons, root)
@@ -405,10 +405,20 @@ function cloneFilesList (value, name) {
   throw new TypeError(`${name} list must be an array. Received type ${typeof value} (${value})`)
 }
 
-function mountPath (value, root) {
-  if (value[0] === '/') return new URL('.' + value, root).href
+function mountSpecifier (specifier, root) {
+  if (startsWithWindowsDriveLetter(specifier)) {
+    specifier = '/' + specifier
+  }
 
-  return value
+  if (specifier[0] === '/' || specifier[0] === '\\') {
+    specifier = '.' + specifier
+  }
+
+  if (specifier.startsWith('./') || specifier.startsWith('.\\')) {
+    return new URL(specifier, root).href
+  }
+
+  return new URL('.' + new URL(specifier).pathname, root).href
 }
 
 function mountImportsMap (value, root, conditionalRoot, opts) {
@@ -428,7 +438,7 @@ function mountImportsMap (value, root, conditionalRoot, opts) {
 function mountImportsMapEntry (value, root, conditionalRoot, opts) {
   const { conditions = {} } = opts
 
-  if (typeof value === 'string') return mountPath(value, conditionalRoot || conditions.default || root)
+  if (typeof value === 'string') return mountSpecifier(value, conditionalRoot || conditions.default || root)
 
   return mountImportsMap(value, root, conditionalRoot, opts)
 }
@@ -437,7 +447,7 @@ function mountResolutionsMap (value, root, opts) {
   const resolutions = {}
 
   for (const entry of Object.entries(value)) {
-    resolutions[mountPath(entry[0], root)] = mountImportsMap(entry[1], root, null, opts)
+    resolutions[mountSpecifier(entry[0], root)] = mountImportsMap(entry[1], root, null, opts)
   }
 
   return resolutions
@@ -447,8 +457,42 @@ function mountFilesList (value, root) {
   const files = []
 
   for (const entry of value) {
-    files.push(mountPath(entry, root))
+    files.push(mountSpecifier(entry, root))
   }
 
   return files
+}
+
+// https://infra.spec.whatwg.org/#ascii-upper-alpha
+function isASCIIUpperAlpha (c) {
+  return c >= 0x41 && c <= 0x5a
+}
+
+// https://infra.spec.whatwg.org/#ascii-lower-alpha
+function isASCIILowerAlpha (c) {
+  return c >= 0x61 && c <= 0x7a
+}
+
+// https://infra.spec.whatwg.org/#ascii-alpha
+function isASCIIAlpha (c) {
+  return isASCIIUpperAlpha(c) || isASCIILowerAlpha(c)
+}
+
+// https://url.spec.whatwg.org/#windows-drive-letter
+function isWindowsDriveLetter (input) {
+  return input.length >= 2 && isASCIIAlpha(input.charCodeAt(0)) && (
+    input.charCodeAt(1) === 0x3a ||
+    input.charCodeAt(1) === 0x7c
+  )
+}
+
+// https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
+function startsWithWindowsDriveLetter (input) {
+  return input.length >= 2 && isWindowsDriveLetter(input) && (
+    input.length === 2 ||
+    input.charCodeAt(2) === 0x2f ||
+    input.charCodeAt(2) === 0x5c ||
+    input.charCodeAt(2) === 0x3f ||
+    input.charCodeAt(2) === 0x23
+  )
 }
