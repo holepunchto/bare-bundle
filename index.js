@@ -418,7 +418,7 @@ function mountSpecifier (specifier, root) {
     return new URL(specifier, root).href
   }
 
-  return new URL('.' + new URL(specifier).pathname, root).href
+  return specifier
 }
 
 function mountImportsMap (value, root, conditionalRoot, opts) {
