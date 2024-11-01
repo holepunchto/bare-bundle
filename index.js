@@ -180,24 +180,45 @@ const Bundle = module.exports = exports = class Bundle {
   }
 
   mount (root, opts = {}) {
-    const mounted = new Bundle()
+    const bundle = new Bundle()
 
     // Go through the private API properties as we're operating on already
     // validated values.
 
-    if (this._main) mounted._main = mountSpecifier(this._main, root)
+    if (this._main) bundle._main = mountSpecifier(this._main, root)
 
-    mounted._imports = mountImportsMap(this._imports, root, null, opts)
-    mounted._resolutions = mountResolutionsMap(this._resolutions, root, opts)
+    bundle._imports = transformImportsMap(this._imports, root, null, opts, mountSpecifier)
+    bundle._resolutions = transformResolutionsMap(this._resolutions, root, opts, mountSpecifier)
 
     for (const [key, file] of this._files) {
-      mounted._files.set(mountSpecifier(key, root), file)
+      bundle._files.set(mountSpecifier(key, root), file)
     }
 
-    mounted._addons = mountFilesList(this._addons, root)
-    mounted._assets = mountFilesList(this._assets, root)
+    bundle._addons = transformFilesList(this._addons, root, mountSpecifier)
+    bundle._assets = transformFilesList(this._assets, root, mountSpecifier)
 
-    return mounted
+    return bundle
+  }
+
+  unmount (root, opts = {}) {
+    const bundle = new Bundle()
+
+    // Go through the private API properties as we're operating on already
+    // validated values.
+
+    if (this._main) bundle._main = unmountSpecifier(this._main, root)
+
+    bundle._imports = transformImportsMap(this._imports, root, null, opts, unmountSpecifier)
+    bundle._resolutions = transformResolutionsMap(this._resolutions, root, opts, unmountSpecifier)
+
+    for (const [key, file] of this._files) {
+      bundle._files.set(unmountSpecifier(key, root), file)
+    }
+
+    bundle._addons = transformFilesList(this._addons, root, unmountSpecifier)
+    bundle._assets = transformFilesList(this._assets, root, unmountSpecifier)
+
+    return bundle
   }
 
   toBuffer (opts = {}) {
@@ -403,6 +424,48 @@ function cloneFilesList (value, name) {
   throw new TypeError(`${name} list must be an array. Received type ${typeof value} (${value})`)
 }
 
+function transformImportsMap (value, root, conditionalRoot, opts, fn) {
+  const { conditions = {} } = opts
+
+  const imports = {}
+
+  for (const entry of Object.entries(value)) {
+    const condition = entry[0]
+
+    imports[condition] = transformImportsMapEntry(entry[1], root, conditionalRoot || conditions[condition], opts, fn)
+  }
+
+  return imports
+}
+
+function transformImportsMapEntry (value, root, conditionalRoot, opts, fn) {
+  const { conditions = {} } = opts
+
+  if (typeof value === 'string') return fn(value, conditionalRoot || conditions.default || root)
+
+  return transformImportsMap(value, root, conditionalRoot, opts, fn)
+}
+
+function transformResolutionsMap (value, root, opts, fn) {
+  const resolutions = {}
+
+  for (const entry of Object.entries(value)) {
+    resolutions[fn(entry[0], root)] = transformImportsMap(entry[1], root, null, opts, fn)
+  }
+
+  return resolutions
+}
+
+function transformFilesList (value, root, fn) {
+  const files = []
+
+  for (const entry of value) {
+    files.push(fn(entry, root))
+  }
+
+  return files
+}
+
 function mountSpecifier (specifier, root) {
   if (startsWithWindowsDriveLetter(specifier)) {
     specifier = '/' + specifier
@@ -419,46 +482,35 @@ function mountSpecifier (specifier, root) {
   return specifier
 }
 
-function mountImportsMap (value, root, conditionalRoot, opts) {
-  const { conditions = {} } = opts
+function unmountSpecifier (specifier, root) {
+  specifier = new URL(specifier)
 
-  const imports = {}
+  if (typeof root === 'string') root = new URL(root)
 
-  for (const entry of Object.entries(value)) {
-    const condition = entry[0]
-
-    imports[condition] = mountImportsMapEntry(entry[1], root, conditionalRoot || conditions[condition], opts)
+  if (specifier.protocol !== root.protocol || specifier.host !== root.host || specifier.port !== root.port) {
+    return specifier
   }
 
-  return imports
-}
+  const specifierPath = splitPath(specifier.pathname)
+  const rootPath = splitPath(root.pathname)
 
-function mountImportsMapEntry (value, root, conditionalRoot, opts) {
-  const { conditions = {} } = opts
-
-  if (typeof value === 'string') return mountSpecifier(value, conditionalRoot || conditions.default || root)
-
-  return mountImportsMap(value, root, conditionalRoot, opts)
-}
-
-function mountResolutionsMap (value, root, opts) {
-  const resolutions = {}
-
-  for (const entry of Object.entries(value)) {
-    resolutions[mountSpecifier(entry[0], root)] = mountImportsMap(entry[1], root, null, opts)
+  while (specifierPath.length > 0 && rootPath[0] === specifierPath[0]) {
+    specifierPath.shift()
+    rootPath.shift()
   }
 
-  return resolutions
+  rootPath.fill('..')
+
+  return '/' + rootPath.concat(specifierPath).join('/')
 }
 
-function mountFilesList (value, root) {
-  const files = []
+function splitPath (path) {
+  const parts = path.split('/')
 
-  for (const entry of value) {
-    files.push(mountSpecifier(entry, root))
-  }
+  if (!parts[0]) parts.shift()
+  if (!parts[parts.length - 1]) parts.pop()
 
-  return files
+  return parts
 }
 
 // https://infra.spec.whatwg.org/#ascii-upper-alpha

@@ -69,6 +69,29 @@ test('mount', (t) => {
   ])
 })
 
+test('unmount', (t) => {
+  const bundle = new Bundle()
+
+  bundle
+    .write('/foo.js', 'foo')
+    .write('/bar.js', 'bar')
+    .write('/baz.txt', 'baz', { asset: true })
+
+  bundle.imports = {
+    bar: '/bar.js'
+  }
+
+  bundle.resolutions = {
+    '/bar.js': {
+      foo: '/foo.js'
+    }
+  }
+
+  const mounted = bundle.mount(new URL('file:///dir/'))
+
+  t.alike(bundle, mounted.unmount(new URL('file:///dir/')))
+})
+
 test('mount, resolutions map', (t) => {
   const bundle = new Bundle()
 
