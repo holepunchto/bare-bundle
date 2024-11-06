@@ -185,6 +185,9 @@ const Bundle = module.exports = exports = class Bundle {
     // Go through the private API properties as we're operating on already
     // validated values.
 
+    bundle._File = this._File
+    bundle._id = this._id
+
     if (this._main) bundle._main = mountSpecifier(this._main, root)
 
     bundle._imports = transformImportsMap(this._imports, root, null, opts, mountSpecifier)
@@ -205,6 +208,9 @@ const Bundle = module.exports = exports = class Bundle {
 
     // Go through the private API properties as we're operating on already
     // validated values.
+
+    bundle._File = this._File
+    bundle._id = this._id
 
     if (this._main) bundle._main = unmountSpecifier(this._main, root)
 
