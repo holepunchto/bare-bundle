@@ -48,11 +48,14 @@ test('mount', (t) => {
 
   const mounted = bundle.mount(new URL('file:///dir/'))
 
-  t.alike([...mounted], [
-    ['file:///dir/foo.js', Buffer.from('foo'), 0o644],
-    ['file:///dir/bar.js', Buffer.from('bar'), 0o644],
-    ['file:///dir/baz.txt', Buffer.from('baz'), 0o644]
-  ])
+  t.alike(
+    [...mounted],
+    [
+      ['file:///dir/foo.js', Buffer.from('foo'), 0o644],
+      ['file:///dir/bar.js', Buffer.from('bar'), 0o644],
+      ['file:///dir/baz.txt', Buffer.from('baz'), 0o644]
+    ]
+  )
 
   t.alike(mounted.imports, {
     bar: 'file:///dir/bar.js'
@@ -64,9 +67,7 @@ test('mount', (t) => {
     }
   })
 
-  t.alike(mounted.assets, [
-    'file:///dir/baz.txt'
-  ])
+  t.alike(mounted.assets, ['file:///dir/baz.txt'])
 })
 
 test('unmount', (t) => {
@@ -95,9 +96,7 @@ test('unmount', (t) => {
 test('mount, resolutions map', (t) => {
   const bundle = new Bundle()
 
-  bundle
-    .write('/foo.js', 'foo')
-    .write('/bar.txt', 'bar', { asset: true })
+  bundle.write('/foo.js', 'foo').write('/bar.txt', 'bar', { asset: true })
 
   bundle.resolutions = {
     '/foo.js': {
@@ -125,22 +124,21 @@ test('mount, resolutions map', (t) => {
 test('iterate', (t) => {
   const bundle = new Bundle()
 
-  bundle
-    .write('/foo.js', 'foo')
-    .write('/bar.js', 'bar', { mode: 0o655 })
+  bundle.write('/foo.js', 'foo').write('/bar.js', 'bar', { mode: 0o655 })
 
-  t.alike([...bundle], [
-    ['/foo.js', Buffer.from('foo'), 0o644],
-    ['/bar.js', Buffer.from('bar'), 0o655]
-  ])
+  t.alike(
+    [...bundle],
+    [
+      ['/foo.js', Buffer.from('foo'), 0o644],
+      ['/bar.js', Buffer.from('bar'), 0o655]
+    ]
+  )
 })
 
 test('hashbang', (t) => {
   const bundle = new Bundle()
 
-  const buffer = bundle
-    .write('/foo.js', 'foo')
-    .toBuffer()
+  const buffer = bundle.write('/foo.js', 'foo').toBuffer()
 
   const parsed = Bundle.from(
     Buffer.concat([Buffer.from('#!hashbang\n'), buffer])
@@ -151,14 +149,10 @@ test('hashbang', (t) => {
 
 test('reproducible buffers', (t) => {
   const a = new Bundle()
-  a
-    .write('/foo.js', 'foo')
-    .write('/bar.js', 'bar')
+  a.write('/foo.js', 'foo').write('/bar.js', 'bar')
 
   const b = new Bundle()
-  b
-    .write('/bar.js', 'bar')
-    .write('/foo.js', 'foo')
+  b.write('/bar.js', 'bar').write('/foo.js', 'foo')
 
   t.alike(a.toBuffer(), b.toBuffer())
 })

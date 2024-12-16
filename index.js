@@ -1,27 +1,24 @@
 class MemoryFile {
-  constructor (data, opts = {}) {
-    const {
-      executable = false,
-      mode = executable ? 0o755 : 0o644
-    } = opts
+  constructor(data, opts = {}) {
+    const { executable = false, mode = executable ? 0o755 : 0o644 } = opts
 
     this._data = typeof data === 'string' ? Buffer.from(data) : data
     this._mode = mode
   }
 
-  size () {
+  size() {
     return this._data.byteLength
   }
 
-  mode () {
+  mode() {
     return this._mode
   }
 
-  read () {
+  read() {
     return this._data
   }
 
-  inspect () {
+  inspect() {
     return {
       __proto__: { constructor: MemoryFile },
 
@@ -30,24 +27,22 @@ class MemoryFile {
     }
   }
 
-  [Symbol.for('bare.inspect')] () {
+  [Symbol.for('bare.inspect')]() {
     return this.inspect()
   }
 
-  [Symbol.for('nodejs.util.inspect.custom')] () {
+  [Symbol.for('nodejs.util.inspect.custom')]() {
     return this.inspect()
   }
 }
 
-const Bundle = module.exports = exports = class Bundle {
-  static get version () {
+module.exports = exports = class Bundle {
+  static get version() {
     return 0
   }
 
-  constructor (opts = {}) {
-    const {
-      File = MemoryFile
-    } = opts
+  constructor(opts = {}) {
+    const { File = MemoryFile } = opts
 
     this._File = File
     this._id = null
@@ -59,105 +54,111 @@ const Bundle = module.exports = exports = class Bundle {
     this._files = new Map()
   }
 
-  get version () {
+  get version() {
     return Bundle.version
   }
 
-  get id () {
+  get id() {
     return this._id
   }
 
-  set id (value) {
+  set id(value) {
     if (typeof value !== 'string' && value !== null) {
-      throw new TypeError(`ID must be a string or null. Received type ${typeof value} (${value})`)
+      throw new TypeError(
+        `ID must be a string or null. Received type ${typeof value} (${value})`
+      )
     }
 
     this._id = value
   }
 
-  get main () {
+  get main() {
     return this._main
   }
 
-  set main (value) {
+  set main(value) {
     if (typeof value !== 'string' && value !== null) {
-      throw new TypeError(`Main must be a string or null. Received type ${typeof value} (${value})`)
+      throw new TypeError(
+        `Main must be a string or null. Received type ${typeof value} (${value})`
+      )
     }
 
     this._main = value
   }
 
-  get imports () {
+  get imports() {
     return this._imports
   }
 
-  set imports (value) {
+  set imports(value) {
     this._imports = cloneImportsMap(value)
   }
 
-  get resolutions () {
+  get resolutions() {
     return this._resolutions
   }
 
-  set resolutions (value) {
+  set resolutions(value) {
     this._resolutions = cloneResolutionsMap(value)
   }
 
-  get addons () {
+  get addons() {
     return this._addons
   }
 
-  set addons (value) {
+  set addons(value) {
     this._addons = cloneFilesList(value, 'Addons')
   }
 
-  get assets () {
+  get assets() {
     return this._assets
   }
 
-  set assets (value) {
+  set assets(value) {
     this._assets = cloneFilesList(value, 'Assets')
   }
 
-  get files () {
+  get files() {
     return Object.fromEntries(this._files.entries())
   }
 
-  * [Symbol.iterator] () {
+  *[Symbol.iterator]() {
     for (const [key, file] of this._files) {
       yield [key, file.read(), file.mode()]
     }
   }
 
-  keys () {
+  keys() {
     return this._files.keys()
   }
 
-  exists (key) {
+  exists(key) {
     return this._files.has(key)
   }
 
-  size (key) {
+  size(key) {
     const file = this._files.get(key) || null
     if (file === null) return 0
     return file.size()
   }
 
-  mode (key) {
+  mode(key) {
     const file = this._files.get(key) || null
     if (file === null) return 0
     return file.mode()
   }
 
-  read (key) {
+  read(key) {
     const file = this._files.get(key) || null
     if (file === null) return null
     return file.read()
   }
 
-  write (key, data, opts = {}) {
+  write(key, data, opts = {}) {
     if (typeof key !== 'string') {
-      throw new TypeError(`File path must be a string. Received type ${typeof key} (${key})`)
+      throw new TypeError(
+        `File path must be a string. Received type ${typeof key} (${key})`
+      )
     }
 
     const {
@@ -179,7 +180,7 @@ const Bundle = module.exports = exports = class Bundle {
     return this
   }
 
-  mount (root, opts = {}) {
+  mount(root, opts = {}) {
     const bundle = new Bundle()
 
     // Go through the private API properties as we're operating on already
@@ -190,8 +191,19 @@ const Bundle = module.exports = exports = class Bundle {
 
     if (this._main) bundle._main = mountSpecifier(this._main, root)
 
-    bundle._imports = transformImportsMap(this._imports, root, null, opts, mountSpecifier)
-    bundle._resolutions = transformResolutionsMap(this._resolutions, root, opts, mountSpecifier)
+    bundle._imports = transformImportsMap(
+      this._imports,
+      root,
+      null,
+      opts,
+      mountSpecifier
+    )
+    bundle._resolutions = transformResolutionsMap(
+      this._resolutions,
+      root,
+      opts,
+      mountSpecifier
+    )
 
     for (const [key, file] of this._files) {
       bundle._files.set(mountSpecifier(key, root), file)
@@ -203,7 +215,7 @@ const Bundle = module.exports = exports = class Bundle {
     return bundle
   }
 
-  unmount (root, opts = {}) {
+  unmount(root, opts = {}) {
     const bundle = new Bundle()
 
     // Go through the private API properties as we're operating on already
@@ -214,8 +226,19 @@ const Bundle = module.exports = exports = class Bundle {
 
     if (this._main) bundle._main = unmountSpecifier(this._main, root)
 
-    bundle._imports = transformImportsMap(this._imports, root, null, opts, unmountSpecifier)
-    bundle._resolutions = transformResolutionsMap(this._resolutions, root, opts, unmountSpecifier)
+    bundle._imports = transformImportsMap(
+      this._imports,
+      root,
+      null,
+      opts,
+      unmountSpecifier
+    )
+    bundle._resolutions = transformResolutionsMap(
+      this._resolutions,
+      root,
+      opts,
+      unmountSpecifier
+    )
 
     for (const [key, file] of this._files) {
       bundle._files.set(unmountSpecifier(key, root), file)
@@ -227,10 +250,8 @@ const Bundle = module.exports = exports = class Bundle {
     return bundle
   }
 
-  toBuffer (opts = {}) {
-    const {
-      indent = 0
-    } = opts
+  toBuffer(opts = {}) {
+    const { indent = 0 } = opts
 
     const header = {
       version: this.version,
@@ -276,7 +297,7 @@ const Bundle = module.exports = exports = class Bundle {
     return buffer
   }
 
-  inspect () {
+  inspect() {
     return {
       __proto__: { constructor: Bundle },
 
@@ -290,20 +311,22 @@ const Bundle = module.exports = exports = class Bundle {
     }
   }
 
-  [Symbol.for('bare.inspect')] () {
+  [Symbol.for('bare.inspect')]() {
     return this.inspect()
   }
 
-  [Symbol.for('nodejs.util.inspect.custom')] () {
+  [Symbol.for('nodejs.util.inspect.custom')]() {
     return this.inspect()
   }
 }
 
-exports.isBundle = function isBundle (value) {
+const Bundle = exports
+
+exports.isBundle = function isBundle(value) {
   return value instanceof Bundle
 }
 
-exports.from = function from (value) {
+exports.from = function from(value) {
   // from(string)
   if (typeof value === 'string') return fromString(value)
 
@@ -314,11 +337,11 @@ exports.from = function from (value) {
   return value
 }
 
-function fromString (string) {
+function fromString(string) {
   return fromBuffer(Buffer.from(string))
 }
 
-function fromBuffer (buffer) {
+function fromBuffer(buffer) {
   if (buffer[0] === 0x23 /* # */ && buffer[1] === 0x21 /* ! */) {
     let end = 2
 
@@ -350,13 +373,9 @@ function fromBuffer (buffer) {
   let offset = end + len
 
   for (const [file, info] of Object.entries(header.files)) {
-    bundle.write(
-      file,
-      buffer.subarray(offset, offset + info.length),
-      {
-        mode: info.mode || 0o644
-      }
-    )
+    bundle.write(file, buffer.subarray(offset, offset + info.length), {
+      mode: info.mode || 0o644
+    })
 
     offset += info.length
   }
@@ -364,11 +383,11 @@ function fromBuffer (buffer) {
   return bundle
 }
 
-function isDecimal (c) {
+function isDecimal(c) {
   return c >= 0x30 && c <= 0x39
 }
 
-function cloneImportsMap (value) {
+function cloneImportsMap(value) {
   if (typeof value === 'object' && value !== null) {
     const imports = {}
 
@@ -379,10 +398,12 @@ function cloneImportsMap (value) {
     return imports
   }
 
-  throw new TypeError(`Imports map must be an object. Received type ${typeof value} (${value})`)
+  throw new TypeError(
+    `Imports map must be an object. Received type ${typeof value} (${value})`
+  )
 }
 
-function cloneImportsMapEntry (value) {
+function cloneImportsMapEntry(value) {
   if (typeof value === 'string') return value
 
   if (typeof value === 'object' && value !== null) {
@@ -395,10 +416,12 @@ function cloneImportsMapEntry (value) {
     return imports
   }
 
-  throw new TypeError(`Imports map entry must be a string or object. Received type ${typeof value} (${value})`)
+  throw new TypeError(
+    `Imports map entry must be a string or object. Received type ${typeof value} (${value})`
+  )
 }
 
-function cloneResolutionsMap (value) {
+function cloneResolutionsMap(value) {
   if (typeof value === 'object' && value !== null) {
     const resolutions = {}
 
@@ -409,16 +432,20 @@ function cloneResolutionsMap (value) {
     return resolutions
   }
 
-  throw new TypeError(`Resolutions map must be an object. Received type ${typeof value} (${value})`)
+  throw new TypeError(
+    `Resolutions map must be an object. Received type ${typeof value} (${value})`
+  )
 }
 
-function cloneFilesList (value, name) {
+function cloneFilesList(value, name) {
   if (Array.isArray(value)) {
     const files = []
 
     for (const entry of value) {
       if (typeof entry !== 'string') {
-        throw new TypeError(`${name} entry must be a string. Received type ${typeof entry} (${entry})`)
+        throw new TypeError(
+          `${name} entry must be a string. Received type ${typeof entry} (${entry})`
+        )
       }
 
       files.push(entry)
@@ -427,10 +454,12 @@ function cloneFilesList (value, name) {
     return files
   }
 
-  throw new TypeError(`${name} list must be an array. Received type ${typeof value} (${value})`)
+  throw new TypeError(
+    `${name} list must be an array. Received type ${typeof value} (${value})`
+  )
 }
 
-function transformImportsMap (value, root, conditionalRoot, opts, fn) {
+function transformImportsMap(value, root, conditionalRoot, opts, fn) {
   const { conditions = {} } = opts
 
   const imports = {}
@@ -438,31 +467,44 @@ function transformImportsMap (value, root, conditionalRoot, opts, fn) {
   for (const entry of Object.entries(value)) {
     const condition = entry[0]
 
-    imports[condition] = transformImportsMapEntry(entry[1], root, conditionalRoot || conditions[condition], opts, fn)
+    imports[condition] = transformImportsMapEntry(
+      entry[1],
+      root,
+      conditionalRoot || conditions[condition],
+      opts,
+      fn
+    )
   }
 
   return imports
 }
 
-function transformImportsMapEntry (value, root, conditionalRoot, opts, fn) {
+function transformImportsMapEntry(value, root, conditionalRoot, opts, fn) {
   const { conditions = {} } = opts
 
-  if (typeof value === 'string') return fn(value, conditionalRoot || conditions.default || root)
+  if (typeof value === 'string')
+    return fn(value, conditionalRoot || conditions.default || root)
 
   return transformImportsMap(value, root, conditionalRoot, opts, fn)
 }
 
-function transformResolutionsMap (value, root, opts, fn) {
+function transformResolutionsMap(value, root, opts, fn) {
   const resolutions = {}
 
   for (const entry of Object.entries(value)) {
-    resolutions[fn(entry[0], root)] = transformImportsMap(entry[1], root, null, opts, fn)
+    resolutions[fn(entry[0], root)] = transformImportsMap(
+      entry[1],
+      root,
+      null,
+      opts,
+      fn
+    )
   }
 
   return resolutions
 }
 
-function transformFilesList (value, root, fn) {
+function transformFilesList(value, root, fn) {
   const files = []
 
   for (const entry of value) {
@@ -472,7 +514,7 @@ function transformFilesList (value, root, fn) {
   return files
 }
 
-function mountSpecifier (specifier, root) {
+function mountSpecifier(specifier, root) {
   if (startsWithWindowsDriveLetter(specifier)) {
     specifier = '/' + specifier
   }
@@ -488,12 +530,16 @@ function mountSpecifier (specifier, root) {
   return specifier
 }
 
-function unmountSpecifier (specifier, root) {
+function unmountSpecifier(specifier, root) {
   specifier = new URL(specifier)
 
   if (typeof root === 'string') root = new URL(root)
 
-  if (specifier.protocol !== root.protocol || specifier.host !== root.host || specifier.port !== root.port) {
+  if (
+    specifier.protocol !== root.protocol ||
+    specifier.host !== root.host ||
+    specifier.port !== root.port
+  ) {
     return specifier
   }
 
@@ -510,7 +556,7 @@ function unmountSpecifier (specifier, root) {
   return '/' + rootPath.concat(specifierPath).join('/')
 }
 
-function splitPath (path) {
+function splitPath(path) {
   const parts = path.split('/')
 
   if (!parts[0]) parts.shift()
@@ -520,35 +566,38 @@ function splitPath (path) {
 }
 
 // https://infra.spec.whatwg.org/#ascii-upper-alpha
-function isASCIIUpperAlpha (c) {
+function isASCIIUpperAlpha(c) {
   return c >= 0x41 && c <= 0x5a
 }
 
 // https://infra.spec.whatwg.org/#ascii-lower-alpha
-function isASCIILowerAlpha (c) {
+function isASCIILowerAlpha(c) {
   return c >= 0x61 && c <= 0x7a
 }
 
 // https://infra.spec.whatwg.org/#ascii-alpha
-function isASCIIAlpha (c) {
+function isASCIIAlpha(c) {
   return isASCIIUpperAlpha(c) || isASCIILowerAlpha(c)
 }
 
 // https://url.spec.whatwg.org/#windows-drive-letter
-function isWindowsDriveLetter (input) {
-  return input.length >= 2 && isASCIIAlpha(input.charCodeAt(0)) && (
-    input.charCodeAt(1) === 0x3a ||
-    input.charCodeAt(1) === 0x7c
+function isWindowsDriveLetter(input) {
+  return (
+    input.length >= 2 &&
+    isASCIIAlpha(input.charCodeAt(0)) &&
+    (input.charCodeAt(1) === 0x3a || input.charCodeAt(1) === 0x7c)
   )
 }
 
 // https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
-function startsWithWindowsDriveLetter (input) {
-  return input.length >= 2 && isWindowsDriveLetter(input) && (
-    input.length === 2 ||
-    input.charCodeAt(2) === 0x2f ||
-    input.charCodeAt(2) === 0x5c ||
-    input.charCodeAt(2) === 0x3f ||
-    input.charCodeAt(2) === 0x23
+function startsWithWindowsDriveLetter(input) {
+  return (
+    input.length >= 2 &&
+    isWindowsDriveLetter(input) &&
+    (input.length === 2 ||
+      input.charCodeAt(2) === 0x2f ||
+      input.charCodeAt(2) === 0x5c ||
+      input.charCodeAt(2) === 0x3f ||
+      input.charCodeAt(2) === 0x23)
   )
 }
