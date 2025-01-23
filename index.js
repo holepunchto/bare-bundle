@@ -545,7 +545,7 @@ function unmountSpecifier(specifier, root) {
     specifier.host !== root.host ||
     specifier.port !== root.port
   ) {
-    return specifier
+    return specifier.href
   }
 
   const specifierPath = splitPath(specifier.pathname)
