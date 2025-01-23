@@ -254,13 +254,13 @@ module.exports = exports = class Bundle {
     const { indent = 0 } = opts
 
     const header = {
-      version: this.version,
-      id: this.id,
-      main: this.main,
-      imports: this.imports,
-      resolutions: this.resolutions,
-      addons: this.addons.sort(),
-      assets: this.assets.sort(),
+      version: Bundle.version,
+      id: this._id,
+      main: this._main,
+      imports: cloneImportsMap(this._imports),
+      resolutions: cloneResolutionsMap(this._resolutions),
+      addons: cloneFilesList(this._addons, 'Addons'),
+      assets: cloneFilesList(this._assets, 'Assets'),
       files: {}
     }
 
@@ -301,6 +301,7 @@ module.exports = exports = class Bundle {
     return {
       __proto__: { constructor: Bundle },
 
+      version: this.version,
       id: this.id,
       main: this.main,
       imports: this.imports,
@@ -387,11 +388,15 @@ function isDecimal(c) {
   return c >= 0x30 && c <= 0x39
 }
 
+function compareKeys([a], [b]) {
+  return a > b ? 1 : a < b ? -1 : 0
+}
+
 function cloneImportsMap(value) {
   if (typeof value === 'object' && value !== null) {
     const imports = {}
 
-    for (const entry of Object.entries(value)) {
+    for (const entry of Object.entries(value).sort(compareKeys)) {
       imports[entry[0]] = cloneImportsMapEntry(entry[1])
     }
 
@@ -425,7 +430,7 @@ function cloneResolutionsMap(value) {
   if (typeof value === 'object' && value !== null) {
     const resolutions = {}
 
-    for (const entry of Object.entries(value)) {
+    for (const entry of Object.entries(value).sort(compareKeys)) {
       resolutions[entry[0]] = cloneImportsMap(entry[1])
     }
 
@@ -451,7 +456,7 @@ function cloneFilesList(value, name) {
       files.push(entry)
     }
 
-    return files
+    return files.sort()
   }
 
   throw new TypeError(

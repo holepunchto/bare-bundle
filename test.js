@@ -150,9 +150,35 @@ test('hashbang', (t) => {
 test('reproducible buffers', (t) => {
   const a = new Bundle()
   a.write('/foo.js', 'foo').write('/bar.js', 'bar')
+  a.resolutions = {
+    '/foo.js': {
+      a: {
+        f: '/f',
+        e: '/e'
+      },
+      b: '/b'
+    },
+    '/bar.js': {
+      c: '/c',
+      d: '/d'
+    }
+  }
 
   const b = new Bundle()
   b.write('/bar.js', 'bar').write('/foo.js', 'foo')
+  b.resolutions = {
+    '/bar.js': {
+      d: '/d',
+      c: '/c'
+    },
+    '/foo.js': {
+      b: '/b',
+      a: {
+        f: '/f',
+        e: '/e'
+      }
+    }
+  }
 
   t.alike(a.toBuffer(), b.toBuffer())
 })
