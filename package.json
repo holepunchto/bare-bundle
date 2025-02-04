@@ -2,9 +2,16 @@
   "name": "bare-bundle",
   "version": "1.8.3",
   "description": "Application bundle format for JavaScript",
-  "main": "index.js",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./package": "./package.json"
+  },
   "files": [
-    "index.js"
+    "index.js",
+    "index.d.ts"
   ],
   "scripts": {
     "test": "prettier . --check && bare test.js"
@@ -20,8 +27,22 @@
   },
   "homepage": "https://github.com/holepunchto/bare-bundle#readme",
   "devDependencies": {
+    "bare-buffer": "^3.0.2",
+    "bare-url": "^2.1.3",
     "brittle": "^3.1.1",
     "prettier": "^3.4.2",
     "prettier-config-standard": "^7.0.0"
+  },
+  "peerDependencies": {
+    "bare-buffer": "*",
+    "bare-url": "*"
+  },
+  "peerDependenciesMeta": {
+    "bare-buffer": {
+      "optional": true
+    },
+    "bare-url": {
+      "optional": true
+    }
   }
 }
