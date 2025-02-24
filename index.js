@@ -487,8 +487,9 @@ function transformImportsMap(value, root, conditionalRoot, opts, fn) {
 function transformImportsMapEntry(value, root, conditionalRoot, opts, fn) {
   const { conditions = {} } = opts
 
-  if (typeof value === 'string')
+  if (typeof value === 'string') {
     return fn(value, conditionalRoot || conditions.default || root)
+  }
 
   return transformImportsMap(value, root, conditionalRoot, opts, fn)
 }
