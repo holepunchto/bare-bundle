@@ -182,3 +182,13 @@ test('reproducible buffers', (t) => {
 
   t.alike(a.toBuffer(), b.toBuffer())
 })
+
+test('invalid bundle header', (t) => {
+  try {
+    Bundle.from(Buffer.from('16This is not JSON'))
+    t.fail()
+  } catch (err) {
+    t.comment(err.message)
+    t.comment(err.cause.message)
+  }
+})

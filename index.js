@@ -1,3 +1,5 @@
+const errors = require('./lib/errors')
+
 class MemoryFile {
   constructor(data, opts = {}) {
     const { executable = false, mode = executable ? 0o755 : 0o644 } = opts
@@ -323,6 +325,8 @@ module.exports = exports = class Bundle {
 
 const Bundle = exports
 
+exports.errors = errors
+
 exports.isBundle = function isBundle(value) {
   return value instanceof Bundle
 }
@@ -357,7 +361,12 @@ function fromBuffer(buffer) {
 
   const len = parseInt(buffer.toString('utf8', 0, end), 10)
 
-  const header = JSON.parse(buffer.toString('utf8', end, end + len))
+  let header
+  try {
+    header = JSON.parse(buffer.toString('utf8', end, end + len))
+  } catch (err) {
+    throw errors.INVALID_BUNDLE_HEADER('Invalid bundle header', err)
+  }
 
   const bundle = new Bundle()
 
