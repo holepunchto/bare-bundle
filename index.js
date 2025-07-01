@@ -1,5 +1,7 @@
 const errors = require('./lib/errors')
 
+const kind = Symbol.for('bare.bundle.kind')
+
 class MemoryFile {
   constructor(data, opts = {}) {
     const { executable = false, mode = executable ? 0o755 : 0o644 } = opts
@@ -39,6 +41,10 @@ class MemoryFile {
 }
 
 module.exports = exports = class Bundle {
+  static get [kind]() {
+    return 0 // Compatibility version
+  }
+
   static get version() {
     return 0
   }
@@ -54,6 +60,10 @@ module.exports = exports = class Bundle {
     this._addons = []
     this._assets = []
     this._files = new Map()
+  }
+
+  get [kind]() {
+    return Bundle[kind]
   }
 
   get version() {
@@ -328,7 +338,11 @@ const Bundle = exports
 exports.errors = errors
 
 exports.isBundle = function isBundle(value) {
-  return value instanceof Bundle
+  if (value instanceof Bundle) return true
+
+  return (
+    typeof value === 'object' && value !== null && value[kind] === Bundle[kind]
+  )
 }
 
 exports.from = function from(value) {
