@@ -51,20 +51,14 @@ interface Bundle extends Iterable<[key: string, read: Buffer, mode: number]> {
   main: string | null
   resolutions: RecursiveStringObject
 
+  empty(): boolean
   keys(): string[]
-
   exists(key: string): boolean
-
   mode(key: string): number
-
   read(key: string): Buffer
-
   write(key: string, data: string, opts?: BundleWriteOptions): this
-
   mount(root: string | URL, opts?: BundleMountOptions): Bundle
-
   unmount(root: string | URL, opts?: BundleMountOptions): Bundle
-
   toBuffer(opts?: BundleToBufferOptions): Buffer
 }
 
