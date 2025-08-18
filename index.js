@@ -140,6 +140,10 @@ module.exports = exports = class Bundle {
     }
   }
 
+  empty() {
+    return this._files.size === 0
+  }
+
   keys() {
     return this._files.keys()
   }
