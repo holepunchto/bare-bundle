@@ -38,6 +38,7 @@ interface BundleMountOptions {
 
 interface BundleToBufferOptions {
   indent?: number
+  shared?: boolean
 }
 
 interface Bundle extends Iterable<[key: string, read: Buffer, mode: number]> {

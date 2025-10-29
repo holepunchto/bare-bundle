@@ -31,10 +31,7 @@ test('basic', (t) => {
 test('mount', (t) => {
   const bundle = new Bundle()
 
-  bundle
-    .write('/foo.js', 'foo')
-    .write('/bar.js', 'bar')
-    .write('/baz.txt', 'baz', { asset: true })
+  bundle.write('/foo.js', 'foo').write('/bar.js', 'bar').write('/baz.txt', 'baz', { asset: true })
 
   bundle.imports = {
     bar: '/bar.js'
@@ -73,10 +70,7 @@ test('mount', (t) => {
 test('unmount', (t) => {
   const bundle = new Bundle()
 
-  bundle
-    .write('/foo.js', 'foo')
-    .write('/bar.js', 'bar')
-    .write('/baz.txt', 'baz', { asset: true })
+  bundle.write('/foo.js', 'foo').write('/bar.js', 'bar').write('/baz.txt', 'baz', { asset: true })
 
   bundle.imports = {
     bar: '/bar.js'
@@ -140,9 +134,7 @@ test('hashbang', (t) => {
 
   const buffer = bundle.write('/foo.js', 'foo').toBuffer()
 
-  const parsed = Bundle.from(
-    Buffer.concat([Buffer.from('#!hashbang\n'), buffer])
-  )
+  const parsed = Bundle.from(Buffer.concat([Buffer.from('#!hashbang\n'), buffer]))
 
   t.alike(bundle, parsed)
 })

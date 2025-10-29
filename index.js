@@ -76,9 +76,7 @@ module.exports = exports = class Bundle {
 
   set id(value) {
     if (typeof value !== 'string' && value !== null) {
-      throw new TypeError(
-        `ID must be a string or null. Received type ${typeof value} (${value})`
-      )
+      throw new TypeError(`ID must be a string or null. Received type ${typeof value} (${value})`)
     }
 
     this._id = value
@@ -90,9 +88,7 @@ module.exports = exports = class Bundle {
 
   set main(value) {
     if (typeof value !== 'string' && value !== null) {
-      throw new TypeError(
-        `Main must be a string or null. Received type ${typeof value} (${value})`
-      )
+      throw new TypeError(`Main must be a string or null. Received type ${typeof value} (${value})`)
     }
 
     this._main = value
@@ -172,18 +168,10 @@ module.exports = exports = class Bundle {
 
   write(key, data, opts = {}) {
     if (typeof key !== 'string') {
-      throw new TypeError(
-        `File path must be a string. Received type ${typeof key} (${key})`
-      )
+      throw new TypeError(`File path must be a string. Received type ${typeof key} (${key})`)
     }
 
-    const {
-      main = false,
-      alias = null,
-      imports = null,
-      addon = false,
-      asset = false
-    } = opts
+    const { main = false, alias = null, imports = null, addon = false, asset = false } = opts
 
     this._files.set(key, new MemoryFile(data, opts))
 
@@ -207,19 +195,8 @@ module.exports = exports = class Bundle {
 
     if (this._main) bundle._main = mountSpecifier(this._main, root)
 
-    bundle._imports = transformImportsMap(
-      this._imports,
-      root,
-      null,
-      opts,
-      mountSpecifier
-    )
-    bundle._resolutions = transformResolutionsMap(
-      this._resolutions,
-      root,
-      opts,
-      mountSpecifier
-    )
+    bundle._imports = transformImportsMap(this._imports, root, null, opts, mountSpecifier)
+    bundle._resolutions = transformResolutionsMap(this._resolutions, root, opts, mountSpecifier)
 
     for (const [key, file] of this._files) {
       bundle._files.set(mountSpecifier(key, root), file)
@@ -242,19 +219,8 @@ module.exports = exports = class Bundle {
 
     if (this._main) bundle._main = unmountSpecifier(this._main, root)
 
-    bundle._imports = transformImportsMap(
-      this._imports,
-      root,
-      null,
-      opts,
-      unmountSpecifier
-    )
-    bundle._resolutions = transformResolutionsMap(
-      this._resolutions,
-      root,
-      opts,
-      unmountSpecifier
-    )
+    bundle._imports = transformImportsMap(this._imports, root, null, opts, unmountSpecifier)
+    bundle._resolutions = transformResolutionsMap(this._resolutions, root, opts, unmountSpecifier)
 
     for (const [key, file] of this._files) {
       bundle._files.set(unmountSpecifier(key, root), file)
@@ -267,7 +233,7 @@ module.exports = exports = class Bundle {
   }
 
   toBuffer(opts = {}) {
-    const { indent = 0 } = opts
+    const { indent = 0, shared = false } = opts
 
     const header = {
       version: Bundle.version,
@@ -293,14 +259,18 @@ module.exports = exports = class Bundle {
 
     const json = Buffer.from(`\n${JSON.stringify(header, null, indent)}\n`)
 
-    const len = Buffer.from(json.byteLength.toString(10))
+    const length = Buffer.from(json.byteLength.toString(10))
 
-    const buffer = Buffer.alloc(len.byteLength + json.byteLength + offset)
+    const total = length.byteLength + json.byteLength + offset
+
+    const storage = shared ? new SharedArrayBuffer(total) : new ArrayBuffer(total)
+
+    const buffer = Buffer.from(storage)
 
     offset = 0
 
-    buffer.set(len, offset)
-    offset += len.byteLength
+    buffer.set(length, offset)
+    offset += length.byteLength
 
     buffer.set(json, offset)
     offset += json.byteLength
@@ -344,9 +314,7 @@ exports.errors = errors
 exports.isBundle = function isBundle(value) {
   if (value instanceof Bundle) return true
 
-  return (
-    typeof value === 'object' && value !== null && value[kind] === Bundle[kind]
-  )
+  return typeof value === 'object' && value !== null && value[kind] === Bundle[kind]
 }
 
 exports.from = function from(value) {
@@ -430,9 +398,7 @@ function cloneImportsMap(value) {
     return imports
   }
 
-  throw new TypeError(
-    `Imports map must be an object. Received type ${typeof value} (${value})`
-  )
+  throw new TypeError(`Imports map must be an object. Received type ${typeof value} (${value})`)
 }
 
 function cloneImportsMapEntry(value) {
@@ -464,9 +430,7 @@ function cloneResolutionsMap(value) {
     return resolutions
   }
 
-  throw new TypeError(
-    `Resolutions map must be an object. Received type ${typeof value} (${value})`
-  )
+  throw new TypeError(`Resolutions map must be an object. Received type ${typeof value} (${value})`)
 }
 
 function cloneFilesList(value, name) {
@@ -486,9 +450,7 @@ function cloneFilesList(value, name) {
     return files.sort()
   }
 
-  throw new TypeError(
-    `${name} list must be an array. Received type ${typeof value} (${value})`
-  )
+  throw new TypeError(`${name} list must be an array. Received type ${typeof value} (${value})`)
 }
 
 function transformImportsMap(value, root, conditionalRoot, opts, fn) {
@@ -525,13 +487,7 @@ function transformResolutionsMap(value, root, opts, fn) {
   const resolutions = {}
 
   for (const entry of Object.entries(value)) {
-    resolutions[fn(entry[0], root)] = transformImportsMap(
-      entry[1],
-      root,
-      null,
-      opts,
-      fn
-    )
+    resolutions[fn(entry[0], root)] = transformImportsMap(entry[1], root, null, opts, fn)
   }
 
   return resolutions
