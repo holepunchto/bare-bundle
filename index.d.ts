@@ -19,9 +19,11 @@ interface MemoryFile {
 
 declare class MemoryFile {
   /**
-   * Create a `MemoryFile` from `data`, optionally marking it executable or setting an explicit `mode`.
+   * Create a `MemoryFile` from `data`, optionally marking it executable or setting an explicit
+   * `mode`.
    * @param data - The file contents; a string is converted to a `Buffer`.
-   * @param opts - Options; `mode` defaults to `0o755` when `executable` is `true`, otherwise `0o644`.
+   * @param opts - Options; `mode` defaults to `0o755` when `executable` is `true`, otherwise
+   * `0o644`.
    */
   constructor(data: string | Buffer, opts?: MemoryFileOptions)
 }
@@ -51,7 +53,10 @@ interface BundleWriteOptions {
 }
 
 interface BundleMountOptions {
-  /** Per-condition root URLs used to resolve conditional import map entries during `mount()`/`unmount()`. */
+  /**
+   * Per-condition root URLs used to resolve conditional import map entries during
+   * `mount()`/`unmount()`.
+   */
   conditions?: { [condition: string]: string | URL }
 }
 
@@ -78,7 +83,10 @@ interface Bundle extends Iterable<[key: string, read: Buffer, mode: number]> {
   imports: RecursiveStringObject
   /** The key of the bundle's entry file, or `null` if unset. */
   main: string | null
-  /** The bundle's per-file import resolutions map, used to override the default import map for specific files. */
+  /**
+   * The bundle's per-file import resolutions map, used to override the default import map for
+   * specific files.
+   */
   resolutions: RecursiveStringObject
 
   /**
@@ -105,23 +113,27 @@ interface Bundle extends Iterable<[key: string, read: Buffer, mode: number]> {
    */
   read(key: string): Buffer
   /**
-   * Add or replace the file at `key` with `data`, optionally marking it as the main entry, an addon, an asset, or aliased in the import map.
+   * Add or replace the file at `key` with `data`, optionally marking it as the main entry, an
+   * addon, an asset, or aliased in the import map.
    * @param key - The key (path) to store the file under.
    * @param data - The file contents.
-   * @param opts - Options; `main`, `addon`, `asset`, and `executable` default to `false`, and `alias` and `imports` to unset.
+   * @param opts - Options; `main`, `addon`, `asset`, and `executable` default to `false`, and
+   * `alias` and `imports` to unset.
    * @returns The bundle itself, for chaining writes.
    * @throws {TypeError} `key` is not a string.
    */
   write(key: string, data: string, opts?: BundleWriteOptions): this
   /**
-   * Return a copy of the bundle with all file keys and import/resolution specifiers rewritten as absolute URLs resolved against `root`.
+   * Return a copy of the bundle with all file keys and import/resolution specifiers rewritten as
+   * absolute URLs resolved against `root`.
    * @param root - The base URL (or URL string) to resolve keys and specifiers against.
    * @param opts - Options; `conditions` maps import-map condition names to per-condition roots.
    * @returns A new `Bundle` with rewritten keys; the original bundle is left unchanged.
    */
   mount(root: string | URL, opts?: BundleMountOptions): Bundle
   /**
-   * Return a copy of the bundle with all file keys and import/resolution specifiers rewritten as paths relative to `root`, reversing `mount()`.
+   * Return a copy of the bundle with all file keys and import/resolution specifiers rewritten as
+   * paths relative to `root`, reversing `mount()`.
    * @param root - The base URL (or URL string) to make keys and specifiers relative to.
    * @param opts - Options; `conditions` maps import-map condition names to per-condition roots.
    * @returns A new `Bundle` with rewritten keys; the original bundle is left unchanged.
@@ -144,7 +156,10 @@ declare class Bundle {
   constructor(opts?: BundleOptions)
 }
 
-/** An in-memory application bundle: a set of files plus metadata (imports, resolutions, addons, assets) that can be serialized to and parsed from a single buffer. */
+/**
+ * An in-memory application bundle: a set of files plus metadata (imports, resolutions, addons,
+ * assets) that can be serialized to and parsed from a single buffer.
+ */
 declare namespace Bundle {
   export {
     type MemoryFile,
@@ -158,11 +173,13 @@ declare namespace Bundle {
   /**
    * Check whether `value` is a `Bundle`.
    * @param value - The value to check.
-   * @returns `true` if `value` is a `Bundle` instance or exposes the bundle kind symbol, `false` otherwise.
+   * @returns `true` if `value` is a `Bundle` instance or exposes the bundle kind symbol, `false`
+   * otherwise.
    */
   export function isBundle(value: unknown): value is Bundle
   /**
-   * Coerce `value` — a serialized bundle string, a `Buffer`, or an existing `Bundle` — into a `Bundle`.
+   * Coerce `value` — a serialized bundle string, a `Buffer`, or an existing `Bundle` — into a
+   * `Bundle`.
    * @param value - The serialized bundle string or buffer to parse, or an existing `Bundle`.
    * @returns The parsed `Bundle`, or `value` itself if it is already a `Bundle`.
    * @throws {INVALID_BUNDLE_HEADER} the serialized header is not valid JSON.
