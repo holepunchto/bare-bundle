@@ -42,6 +42,10 @@ For each `<url>` in `files`, `offset` provides the byte offset to the file **aft
 
 The bundle may optionally be prefixed with a hashbang, `#!`, for use with script interpreters. The hashbang is ignored during parsing.
 
+## API
+
+See the [`bare-bundle` reference](https://docs.pears.com/reference/bare/modules/bare-bundle).
+
 ## License
 
 Apache-2.0
