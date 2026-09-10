@@ -72,6 +72,11 @@ interface Bundle extends Iterable<[key: string, read: Buffer, mode: number]> {
   readonly files: Record<string, MemoryFile>
   /** The bundle format version this implementation produces and expects. */
   readonly version: number
+  /**
+   * The root this bundle was mounted at, or `null` if it was never mounted. A file may sit
+   * outside it, as one unmounted from outside the root does.
+   */
+  readonly root: string | null
 
   /** The keys of files in the bundle that are native addons. */
   addons: string[]
