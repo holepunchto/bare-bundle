@@ -54,6 +54,7 @@ module.exports = exports = class Bundle {
 
     this._File = File
     this._id = null
+    this._root = null
     this._main = null
     this._imports = {}
     this._resolutions = {}
@@ -80,6 +81,10 @@ module.exports = exports = class Bundle {
     }
 
     this._id = value
+  }
+
+  get root() {
+    return this._root
   }
 
   get main() {
@@ -192,6 +197,7 @@ module.exports = exports = class Bundle {
 
     bundle._File = this._File
     bundle._id = this._id
+    bundle._root = typeof root === 'string' ? root : root.href
 
     if (this._main) bundle._main = mountSpecifier(this._main, root)
 
@@ -199,7 +205,7 @@ module.exports = exports = class Bundle {
     bundle._resolutions = transformResolutionsMap(this._resolutions, root, opts, mountSpecifier)
 
     for (const [key, file] of this._files) {
-      bundle._files.set(mountSpecifier(key, root), file)
+      mountFile(bundle, mountSpecifier(key, root), key, file)
     }
 
     bundle._addons = transformFilesList(this._addons, root, mountSpecifier)
@@ -223,7 +229,7 @@ module.exports = exports = class Bundle {
     bundle._resolutions = transformResolutionsMap(this._resolutions, root, opts, unmountSpecifier)
 
     for (const [key, file] of this._files) {
-      bundle._files.set(unmountSpecifier(key, root), file)
+      mountFile(bundle, unmountSpecifier(key, root), key, file)
     }
 
     bundle._addons = transformFilesList(this._addons, root, unmountSpecifier)
@@ -501,6 +507,14 @@ function transformFilesList(value, root, fn) {
   }
 
   return files
+}
+
+function mountFile(bundle, key, from, file) {
+  if (bundle._files.has(key)) {
+    throw errors.DUPLICATE_FILE(`File '${from}' would overwrite '${key}'`)
+  }
+
+  bundle._files.set(key, file)
 }
 
 function mountSpecifier(specifier, root) {

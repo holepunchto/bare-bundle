@@ -87,6 +87,41 @@ test('unmount', (t) => {
   t.alike(bundle, mounted.unmount(new URL('file:///dir/')))
 })
 
+test('mount records the root', (t) => {
+  const bundle = new Bundle().write('/foo.js', 'foo')
+
+  t.is(bundle.root, null, 'a bundle that was never mounted has no root')
+
+  const mounted = bundle.mount(new URL('file:///dir/'))
+
+  t.is(mounted.root, 'file:///dir/')
+  t.is(mounted.mount('file:///other/').root, 'file:///other/', 'a string root is kept as given')
+  t.is(mounted.unmount(new URL('file:///dir/')).root, null, 'unmounting gives up the root')
+})
+
+test('mount keeps a file from outside the root', (t) => {
+  const bundle = new Bundle()
+    .write('/foo.js', 'foo', { main: true })
+    .write('/../outside.js', 'outside')
+
+  const mounted = bundle.mount('file:///dir/')
+
+  // Reaching a module outside the root is how a bundle unmounted from outside
+  // it round trips, so the key is kept rather than turned down.
+  t.alike(Object.keys(mounted.files), ['file:///dir/foo.js', 'file:///outside.js'])
+  t.alike(bundle, mounted.unmount('file:///dir/'), 'and it round trips')
+})
+
+test('mount refuses two files landing on one path', (t) => {
+  const bundle = new Bundle().write('/foo.js', 'a').write('/../dir/foo.js', 'b')
+
+  // Both land on file:///dir/foo.js, and the second would take the first's
+  // place without either saying so.
+  t.exception(() => bundle.mount('file:///dir/'), /DUPLICATE_FILE/)
+
+  t.execution(() => bundle.mount('file:///other/'), 'they are distinct under another root')
+})
+
 test('mount, resolutions map', (t) => {
   const bundle = new Bundle()
 
