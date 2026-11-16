@@ -6,11 +6,15 @@ interface MemoryFileOptions {
   executable?: boolean
   /** An explicit file mode (permission bits), overriding `executable`. */
   mode?: number
+  /** The module type the file is loaded as, such as `'script'` or `'module'`, or `null` if unknown. */
+  type?: string | null
 }
 
 interface MemoryFile {
   /** Return the file's mode (permission bits). */
   mode(): number
+  /** Return the module type the file is loaded as, or `null` if unknown. */
+  type(): string | null
   /** Return the file's contents as a `Buffer`. */
   read(): Buffer
   /** Return the file's byte length. */
@@ -50,6 +54,12 @@ interface BundleWriteOptions {
   main?: boolean
   /** An explicit file mode (permission bits) for the written file. */
   mode?: number
+  /**
+   * The module type the written file is loaded as, using the names of the `type` import attribute:
+   * `'script'`, `'module'`, `'json'`, `'text'`, `'binary'`, `'addon'`, or `'bundle'`. Defaults to
+   * `null`, meaning the type is unknown and is inferred when the file is loaded.
+   */
+  type?: string | null
 }
 
 interface BundleMountOptions {
@@ -113,6 +123,12 @@ interface Bundle extends Iterable<[key: string, read: Buffer, mode: number]> {
    */
   mode(key: string): number
   /**
+   * Return the module type of the file at `key`, or `null` if it is unknown or the file doesn't
+   * exist.
+   * @param key - The key of the file to look up.
+   */
+  type(key: string): string | null
+  /**
    * Return the contents of the file at `key` as a `Buffer`, or `null` if it doesn't exist.
    * @param key - The key of the file to read.
    */
@@ -125,7 +141,7 @@ interface Bundle extends Iterable<[key: string, read: Buffer, mode: number]> {
    * @param opts - Options; `main`, `addon`, `asset`, and `executable` default to `false`, and
    * `alias` and `imports` to unset.
    * @returns The bundle itself, for chaining writes.
-   * @throws {TypeError} `key` is not a string.
+   * @throws {TypeError} `key` is not a string, or `opts.type` is neither a string nor `null`.
    */
   write(key: string, data: string, opts?: BundleWriteOptions): this
   /**

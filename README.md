@@ -32,13 +32,16 @@ The header length is an integer literal denoting the total length of the header.
     "<url>": {
       "offset": number,
       "length": number,
-      "mode": number
+      "mode": number,
+      "type"?: "<type>"
     }
   }
 }
 ```
 
 For each `<url>` in `files`, `offset` provides the byte offset to the file **after** the header and `length` provides the byte length of the file.
+
+The optional `type` records the module type the file is loaded as, using the names of the `type` import attribute: `script`, `module`, `json`, `text`, `binary`, `addon`, or `bundle`. When it is left out, the type is inferred when the file is loaded, as for a file outside a bundle.
 
 The bundle may optionally be prefixed with a hashbang, `#!`, for use with script interpreters. The hashbang is ignored during parsing.
 

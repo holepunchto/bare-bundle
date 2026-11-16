@@ -4,10 +4,15 @@ const kind = Symbol.for('bare.bundle.kind')
 
 class MemoryFile {
   constructor(data, opts = {}) {
-    const { executable = false, mode = executable ? 0o755 : 0o644 } = opts
+    const { executable = false, mode = executable ? 0o755 : 0o644, type = null } = opts
+
+    if (typeof type !== 'string' && type !== null) {
+      throw new TypeError(`Type must be a string or null. Received type ${typeof type} (${type})`)
+    }
 
     this._data = typeof data === 'string' ? Buffer.from(data) : data
     this._mode = mode
+    this._type = type
   }
 
   size() {
@@ -16,6 +21,10 @@ class MemoryFile {
 
   mode() {
     return this._mode
+  }
+
+  type() {
+    return this._type
   }
 
   read() {
@@ -27,7 +36,8 @@ class MemoryFile {
       __proto__: { constructor: MemoryFile },
 
       data: this._data,
-      mode: this._mode.toString(8)
+      mode: this._mode.toString(8),
+      type: this._type
     }
   }
 
@@ -165,6 +175,12 @@ module.exports = exports = class Bundle {
     return file.mode()
   }
 
+  type(key) {
+    const file = this._files.get(key) || null
+    if (file === null) return null
+    return file.type()
+  }
+
   read(key) {
     const file = this._files.get(key) || null
     if (file === null) return null
@@ -259,7 +275,12 @@ module.exports = exports = class Bundle {
     for (const key of keys) {
       const length = this.size(key)
 
+      const type = this.type(key)
+
       header.files[key] = { offset, length, mode: this.mode(key) }
+
+      if (type !== null) header.files[key].type = type
+
       offset += length
     }
 
@@ -376,7 +397,8 @@ function fromBuffer(buffer) {
 
   for (const [file, info] of Object.entries(header.files)) {
     bundle.write(file, buffer.subarray(offset, offset + info.length), {
-      mode: info.mode || 0o644
+      mode: info.mode || 0o644,
+      type: info.type || null
     })
 
     offset += info.length
