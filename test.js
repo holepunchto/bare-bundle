@@ -219,3 +219,27 @@ test('invalid bundle header', (t) => {
     t.comment(err.cause.message)
   }
 })
+
+test('types round trip and survive mounting', (t) => {
+  const bundle = new Bundle()
+    .write('/foo.js', 'foo', { type: 'module' })
+    .write('/bar.js', 'bar', { type: 'text' })
+    .write('/baz.js', 'baz')
+
+  const copy = Bundle.from(bundle.toBuffer())
+
+  t.is(copy.type('/foo.js'), 'module')
+  t.is(copy.type('/bar.js'), 'text')
+  t.is(copy.type('/baz.js'), null)
+
+  const mounted = copy.mount(new URL('file:///dir/'))
+
+  t.is(mounted.type('file:///dir/foo.js'), 'module')
+  t.alike(copy, mounted.unmount(new URL('file:///dir/')))
+})
+
+test('files without a type serialize without one', (t) => {
+  const buffer = new Bundle().write('/foo.js', 'foo').toBuffer()
+
+  t.absent(buffer.toString().includes('"type"'))
+})
